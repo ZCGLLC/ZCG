@@ -26,27 +26,6 @@
     });
   }
 
-  const heroRotate = document.querySelector("[data-hero-rotate]");
-  if (heroRotate) {
-    const slides = Array.from(heroRotate.querySelectorAll("img"));
-    if (slides.length > 1) {
-      let index = slides.findIndex((img) => img.classList.contains("is-active"));
-      if (index < 0) {
-        index = 0;
-        slides[0].classList.add("is-active");
-      }
-
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!reducedMotion) {
-        setInterval(() => {
-          slides[index].classList.remove("is-active");
-          index = (index + 1) % slides.length;
-          slides[index].classList.add("is-active");
-        }, 6500);
-      }
-    }
-  }
-
   const revealEls = document.querySelectorAll(".reveal, .service-row");
   if ("IntersectionObserver" in window && revealEls.length) {
     const observer = new IntersectionObserver(
