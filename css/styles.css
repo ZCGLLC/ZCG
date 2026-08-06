@@ -847,6 +847,7 @@ select {
 }
 
 .contact-form {
+  position: relative;
   background:
     linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(245, 243, 239, 0.95)),
     var(--white);
@@ -941,10 +942,6 @@ select {
   height: 0;
   width: 0;
   overflow: hidden;
-}
-
-.contact-form {
-  position: relative;
 }
 
 /* ——— Footer ——— */
