@@ -882,6 +882,10 @@ select {
   margin-top: 1.25rem;
 }
 
+.service-detail-actions {
+  margin-top: 1.25rem;
+}
+
 /* ——— Contact ——— */
 .contact-layout {
   display: grid;
