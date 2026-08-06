@@ -374,4 +374,225 @@
   } else {
     showAepPopup();
   }
+
+  const initChatWidget = () => {
+    if (document.querySelector(".chat-widget")) return;
+
+    const faqReplies = [
+      {
+        keys: ["revenue", "rcm", "billing", "denial", "collections", "claim"],
+        reply:
+          "Our Revenue Cycle Management work helps improve billing accuracy, reduce denials, and strengthen collections. You can learn more on our Revenue Cycle page, or leave your email and question below and our team will follow up.",
+      },
+      {
+        keys: ["marketing", "call", "campaign", "aep", "medicare", "aca", "lead"],
+        reply:
+          "Performance Marketing at ZCG focuses on channel strategy, creative testing, analytics, and pre-qualified high-intent calls across different verticals. Share your question with your email and we’ll get back to you.",
+      },
+      {
+        keys: ["staff", "staffing", "remote", "hire", "talent", "workforce"],
+        reply:
+          "Our Remote Staffing Solutions help healthcare organizations design roles, source talent, and manage quality for distributed teams. Send your question with your email and a teammate will reach out.",
+      },
+      {
+        keys: ["price", "pricing", "cost", "quote", "rate"],
+        reply:
+          "Pricing depends on scope, volume, and timeline. Leave your email and a short note about what you need, and we’ll follow up with next steps.",
+      },
+      {
+        keys: ["contact", "talk", "call me", "human", "team"],
+        reply:
+          "Happy to connect you with the team. Add your email below with your question, or visit the Contact Us page anytime.",
+      },
+    ];
+
+    const widget = document.createElement("div");
+    widget.className = "chat-widget";
+    widget.innerHTML = `
+      <div class="chat-panel" id="chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title" hidden>
+        <div class="chat-header">
+          <div>
+            <h2 id="chat-title">Chat with ZCG</h2>
+            <p>Ask a question — we’ll help or connect you with our team.</p>
+          </div>
+          <button class="chat-close" type="button" aria-label="Close chat">&times;</button>
+        </div>
+        <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+        <div class="chat-quick" id="chat-quick">
+          <button type="button" data-quick="Tell me about Revenue Cycle Management">Revenue Cycle</button>
+          <button type="button" data-quick="Tell me about Performance Marketing">Performance Marketing</button>
+          <button type="button" data-quick="Tell me about Remote Staffing">Remote Staffing</button>
+          <button type="button" data-quick="I want to talk with your team">Talk to the team</button>
+        </div>
+        <form class="chat-composer" id="chat-form">
+          <div>
+            <label for="chat-email">Email</label>
+            <input id="chat-email" name="email" type="email" placeholder="you@company.com" autocomplete="email" required />
+          </div>
+          <div>
+            <label for="chat-message">Your question</label>
+            <div class="chat-composer-row">
+              <textarea id="chat-message" name="message" rows="2" placeholder="Type your question..." required></textarea>
+              <button class="btn btn-primary" type="submit" id="chat-submit">Send</button>
+            </div>
+          </div>
+          <p class="chat-status" id="chat-status" hidden></p>
+        </form>
+      </div>
+      <button class="chat-launcher" type="button" aria-expanded="false" aria-controls="chat-panel">
+        <svg class="chat-launcher-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M4.5 6.75h15a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5H9l-3.75 3v-3H4.5a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" />
+        </svg>
+        <span class="chat-launcher-label">Chat with us</span>
+      </button>
+    `;
+
+    document.body.appendChild(widget);
+
+    const panel = widget.querySelector("#chat-panel");
+    const launcher = widget.querySelector(".chat-launcher");
+    const closeBtn = widget.querySelector(".chat-close");
+    const messages = widget.querySelector("#chat-messages");
+    const form = widget.querySelector("#chat-form");
+    const emailInput = widget.querySelector("#chat-email");
+    const messageInput = widget.querySelector("#chat-message");
+    const submitBtn = widget.querySelector("#chat-submit");
+    const status = widget.querySelector("#chat-status");
+    const quickWrap = widget.querySelector("#chat-quick");
+
+    const addBubble = (text, who) => {
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble is-" + who;
+      bubble.textContent = text;
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+    };
+
+    const findFaqReply = (text) => {
+      const lower = text.toLowerCase();
+      const match = faqReplies.find((item) => item.keys.some((key) => lower.includes(key)));
+      return (
+        match?.reply ||
+        "Thanks for your question. Share your email (if you haven’t already) and send your message — our team will follow up by email shortly."
+      );
+    };
+
+    const setOpen = (open) => {
+      panel.hidden = !open;
+      panel.classList.toggle("is-open", open);
+      launcher.setAttribute("aria-expanded", String(open));
+      panel.setAttribute("aria-modal", String(open));
+      if (open) {
+        if (!messages.dataset.ready) {
+          addBubble(
+            "Hi — welcome to Zaidi Consulting Group. Ask about Revenue Cycle, Performance Marketing, Remote Staffing, or leave any question for our team.",
+            "bot"
+          );
+          messages.dataset.ready = "1";
+        }
+        messageInput?.focus();
+      }
+    };
+
+    launcher?.addEventListener("click", () => {
+      setOpen(!panel.classList.contains("is-open"));
+    });
+    closeBtn?.addEventListener("click", () => setOpen(false));
+
+    quickWrap?.querySelectorAll("button[data-quick]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const value = btn.getAttribute("data-quick") || "";
+        if (messageInput) messageInput.value = value;
+        addBubble(findFaqReply(value), "bot");
+        messageInput?.focus();
+      });
+    });
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!emailInput || !messageInput || !submitBtn || !status) return;
+
+      const email = emailInput.value.trim();
+      const question = messageInput.value.trim();
+      if (!email || !emailInput.checkValidity()) {
+        status.hidden = false;
+        status.className = "chat-status is-error";
+        status.textContent = "Please enter a valid email address.";
+        emailInput.focus();
+        return;
+      }
+      if (!question) {
+        status.hidden = false;
+        status.className = "chat-status is-error";
+        status.textContent = "Please type your question.";
+        messageInput.focus();
+        return;
+      }
+
+      addBubble(question, "user");
+      const original = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending...";
+      status.hidden = true;
+
+      const body = new FormData();
+      body.append("email", email);
+      body.append("message", question);
+      body.append("_subject", "Website chat question — Zaidi Consulting Group");
+      body.append("Source", "Website chatbox");
+      body.append("_template", "table");
+      body.append("_captcha", "false");
+      body.append("_replyto", email);
+      body.append(
+        "_autoresponse",
+        "Thanks for contacting Zaidi Consulting Group. We received your question and will follow up shortly. — ZCG Team"
+      );
+
+      try {
+        const response = await fetch(
+          "https://formsubmit.co/ajax/Connect@zaidiconsultinggroup.com",
+          {
+            method: "POST",
+            body,
+            headers: { Accept: "application/json" },
+          }
+        );
+        if (!response.ok) throw new Error("Chat submit failed");
+
+        addBubble(findFaqReply(question), "bot");
+        addBubble(
+          "Your question was sent to our team. We’ll reply to " + email + " soon.",
+          "bot"
+        );
+        status.hidden = false;
+        status.className = "chat-status is-success";
+        status.textContent = "Message sent. Check your email for a confirmation.";
+        messageInput.value = "";
+      } catch (_err) {
+        status.hidden = false;
+        status.className = "chat-status is-error";
+        status.textContent =
+          "We couldn’t send that just now. Please email Connect@zaidiconsultinggroup.com.";
+        addBubble(
+          "I couldn’t send that through chat just now. Please email Connect@zaidiconsultinggroup.com and we’ll help right away.",
+          "bot"
+        );
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = original || "Send";
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && panel.classList.contains("is-open")) {
+        setOpen(false);
+      }
+    });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initChatWidget);
+  } else {
+    initChatWidget();
+  }
 })();
