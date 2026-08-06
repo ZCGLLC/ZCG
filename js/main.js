@@ -183,4 +183,72 @@
     update();
     restart();
   }
+
+  const aepStorageKey = "zcg-aep-popup-dismissed";
+  const resolveContactHref = () => {
+    const parts = window.location.pathname
+      .replace(/\/+$/, "")
+      .split("/")
+      .filter((part) => part && part !== "index.html");
+    const rootIdx = parts[0] === "ZCG" ? 1 : 0;
+    const relative = parts.slice(rootIdx);
+    if (relative.length === 0) return "contact/";
+    if (relative[0] === "contact") return "./";
+    return "../".repeat(relative.length) + "contact/";
+  };
+
+  const showAepPopup = () => {
+    if (sessionStorage.getItem(aepStorageKey) === "1") return;
+
+    const contactHref = resolveContactHref();
+    const root = document.createElement("div");
+    root.className = "aep-popup";
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-labelledby", "aep-popup-title");
+    root.innerHTML = `
+      <button class="aep-popup-backdrop" type="button" aria-label="Dismiss offer"></button>
+      <div class="aep-popup-dialog">
+        <button class="aep-popup-close" type="button" aria-label="Close">&times;</button>
+        <p class="aep-popup-kicker">Annual Enrollment Period</p>
+        <h2 id="aep-popup-title">AEP is approaching</h2>
+        <p>
+          Connect now for an insurance campaign and get <strong>10% off</strong> (New LOBs).
+        </p>
+        <a class="btn btn-primary" href="${contactHref}">Connect Now</a>
+        <p class="aep-popup-note">Limited-time offer for new lines of business.</p>
+      </div>
+    `;
+
+    document.body.appendChild(root);
+
+    const close = () => {
+      root.classList.remove("is-open");
+      document.body.classList.remove("aep-popup-open");
+      sessionStorage.setItem(aepStorageKey, "1");
+      window.setTimeout(() => root.remove(), 320);
+    };
+
+    root.querySelector(".aep-popup-backdrop")?.addEventListener("click", close);
+    root.querySelector(".aep-popup-close")?.addEventListener("click", close);
+    root.querySelector(".aep-popup-dialog .btn")?.addEventListener("click", () => {
+      sessionStorage.setItem(aepStorageKey, "1");
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && root.classList.contains("is-open")) close();
+    });
+
+    window.setTimeout(() => {
+      document.body.classList.add("aep-popup-open");
+      root.classList.add("is-open");
+      root.querySelector(".aep-popup-close")?.focus();
+    }, 500);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", showAepPopup);
+  } else {
+    showAepPopup();
+  }
 })();

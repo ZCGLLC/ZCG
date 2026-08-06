@@ -1606,3 +1606,119 @@ select {
     flex: 0 0 100%;
   }
 }
+
+/* AEP promo popup */
+.aep-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.aep-popup.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.aep-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 26, 34, 0.62);
+  backdrop-filter: blur(3px);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.aep-popup-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 28rem);
+  background:
+    radial-gradient(circle at top right, rgba(184, 146, 74, 0.18), transparent 45%),
+    linear-gradient(160deg, #10262f 0%, #0e1a22 55%, #12363a 100%);
+  color: var(--white);
+  padding: 2rem 1.75rem 1.75rem;
+  box-shadow: 0 24px 60px rgba(14, 26, 34, 0.35);
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.35s ease;
+}
+
+.aep-popup.is-open .aep-popup-dialog {
+  transform: none;
+}
+
+.aep-popup-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.aep-popup-close:hover {
+  color: var(--white);
+}
+
+.aep-popup-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+}
+
+.aep-popup-dialog h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1.15;
+  margin-bottom: 0.85rem;
+}
+
+.aep-popup-dialog p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.aep-popup-dialog .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.aep-popup-note {
+  margin-top: 0.85rem;
+  margin-bottom: 0 !important;
+  font-size: 0.82rem !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  text-align: center;
+}
+
+body.aep-popup-open {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aep-popup,
+  .aep-popup-dialog {
+    transition: none;
+  }
+}
