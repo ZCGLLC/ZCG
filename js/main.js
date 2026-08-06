@@ -202,7 +202,7 @@
       <div class="aep-popup-dialog">
         <button class="aep-popup-close" type="button" aria-label="Close">&times;</button>
         <p class="aep-popup-kicker">Annual Enrollment Period</p>
-        <h2 id="aep-popup-title">AEP is Approaching.</h2>
+        <h2 id="aep-popup-title">AEP is Approaching</h2>
         <p class="aep-popup-copy">
           Enter email below to receive <strong>10% off</strong> first campaign.
         </p>
