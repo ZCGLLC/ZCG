@@ -475,11 +475,11 @@ select {
 
 /* Tighten the gap between Our story and What we do */
 #who-we-are {
-  padding-bottom: 1.75rem;
+  padding-bottom: 0.25rem;
 }
 
 #who-we-are + .section {
-  padding-top: 2rem;
+  padding-top: 0.75rem;
 }
 
 .section-ink .section-lead {
