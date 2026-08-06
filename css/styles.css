@@ -291,17 +291,28 @@ select {
 }
 
 .hero-media img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.04);
-  animation: hero-zoom 18s ease-out forwards;
+  opacity: 0;
+  transform: scale(1.06);
+  transition: opacity 1.4s ease, transform 8s ease-out;
+  z-index: 0;
+}
+
+.hero-media img.is-active {
+  opacity: 1;
+  transform: scale(1);
+  z-index: 1;
 }
 
 .hero-media::after {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 2;
   background:
     linear-gradient(180deg, rgba(14, 26, 34, 0.45) 0%, rgba(14, 26, 34, 0.28) 35%, rgba(14, 26, 34, 0.78) 100%),
     linear-gradient(115deg, rgba(14, 26, 34, 0.55) 0%, transparent 55%);
@@ -1127,12 +1138,14 @@ select {
   }
 }
 
-@keyframes hero-zoom {
-  from {
-    transform: scale(1.08);
+@media (prefers-reduced-motion: reduce) {
+  .hero-media img {
+    transition: opacity 0.5s ease;
+    transform: none;
   }
-  to {
-    transform: scale(1);
+
+  .hero-media img.is-active {
+    transform: none;
   }
 }
 
