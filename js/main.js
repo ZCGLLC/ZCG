@@ -185,17 +185,9 @@
   }
 
   const aepStorageKey = "zcg-aep-popup-dismissed";
-  const resolveContactHref = () => {
-    const parts = window.location.pathname
-      .replace(/\/+$/, "")
-      .split("/")
-      .filter((part) => part && part !== "index.html");
-    const rootIdx = parts[0] === "ZCG" ? 1 : 0;
-    const relative = parts.slice(rootIdx);
-    if (relative.length === 0) return "contact/";
-    if (relative[0] === "contact") return "./";
-    return "../".repeat(relative.length) + "contact/";
-  };
+  const aepEndpoint = "https://formsubmit.co/ajax/Connect@zaidiconsultinggroup.com";
+  const aepAutoresponse =
+    "Thank you for connecting with Zaidi Consulting Group. AEP is approaching — reply to this email or contact us at Connect@zaidiconsultinggroup.com to claim 10% off your first insurance campaign. We will follow up shortly.";
 
   const showAepPopup = () => {
     if (sessionStorage.getItem(aepStorageKey) === "1") return;
@@ -214,19 +206,22 @@
         <p class="aep-popup-copy">
           Enter email below to receive <strong>10% off</strong> first campaign.
         </p>
-        <form class="aep-popup-form" novalidate>
-          <label class="aep-popup-label" for="aep-popup-email">Email address</label>
+        <form class="aep-popup-form" id="aep-popup-form" novalidate>
+          <label class="aep-popup-label" for="aep-popup-email">Email</label>
           <input
             id="aep-popup-email"
             class="aep-popup-input"
             type="email"
             name="email"
-            placeholder="you@company.com"
+            placeholder="Enter your email"
             autocomplete="email"
+            inputmode="email"
             required
           />
-          <button class="btn btn-primary" type="submit">Get 10% Off</button>
-          <p class="aep-popup-status" role="status" hidden></p>
+          <button class="btn btn-primary" type="submit" id="aep-popup-submit">
+            Get 10% Off
+          </button>
+          <p class="aep-popup-status" id="aep-popup-status" role="status" hidden></p>
         </form>
       </div>
     `;
@@ -240,10 +235,74 @@
       window.setTimeout(() => root.remove(), 320);
     };
 
-    const form = root.querySelector(".aep-popup-form");
+    const form = root.querySelector("#aep-popup-form");
     const emailInput = root.querySelector("#aep-popup-email");
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    const status = root.querySelector(".aep-popup-status");
+    const submitBtn = root.querySelector("#aep-popup-submit");
+    const status = root.querySelector("#aep-popup-status");
+
+    const markSuccess = () => {
+      if (!status || !form || !emailInput || !submitBtn) return;
+      status.hidden = false;
+      status.className = "aep-popup-status is-success";
+      status.textContent =
+        "Success! Check your email for your 10% off confirmation. We’ll be in touch soon.";
+      emailInput.disabled = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitted";
+      sessionStorage.setItem(aepStorageKey, "1");
+      window.setTimeout(close, 3200);
+    };
+
+    const submitViaIframe = (email) =>
+      new Promise((resolve, reject) => {
+        const frameName = "aep_submit_frame_" + Date.now();
+        const iframe = document.createElement("iframe");
+        iframe.name = frameName;
+        iframe.title = "AEP offer submission";
+        iframe.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden;";
+        document.body.appendChild(iframe);
+
+        const postForm = document.createElement("form");
+        postForm.method = "POST";
+        postForm.action = "https://formsubmit.co/Connect@zaidiconsultinggroup.com";
+        postForm.target = frameName;
+        postForm.style.display = "none";
+
+        const fields = {
+          email,
+          _subject: "AEP 10% Off Campaign Request",
+          Offer: "AEP 10% off first campaign",
+          _template: "table",
+          _captcha: "false",
+          _autoresponse: aepAutoresponse,
+          _replyto: email,
+        };
+
+        Object.entries(fields).forEach(([name, value]) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = name;
+          input.value = value;
+          postForm.appendChild(input);
+        });
+
+        document.body.appendChild(postForm);
+
+        let settled = false;
+        const finish = (ok) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timer);
+          postForm.remove();
+          iframe.remove();
+          if (ok) resolve();
+          else reject(new Error("iframe submit failed"));
+        };
+
+        iframe.addEventListener("load", () => finish(true));
+        const timer = window.setTimeout(() => finish(true), 1800);
+        postForm.submit();
+      });
 
     form?.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -251,7 +310,9 @@
 
       const email = emailInput.value.trim();
       if (!email || !emailInput.checkValidity()) {
-        emailInput.reportValidity();
+        status.hidden = false;
+        status.className = "aep-popup-status is-error";
+        status.textContent = "Please enter a valid email address.";
         emailInput.focus();
         return;
       }
@@ -261,44 +322,41 @@
       submitBtn.textContent = "Sending...";
       status.hidden = true;
 
+      const body = new FormData();
+      body.append("email", email);
+      body.append("_subject", "AEP 10% Off Campaign Request");
+      body.append("Offer", "AEP 10% off first campaign");
+      body.append("_template", "table");
+      body.append("_captcha", "false");
+      body.append("_autoresponse", aepAutoresponse);
+      body.append("_replyto", email);
+
       try {
-        const body = new FormData();
-        body.append("email", email);
-        body.append("_subject", "AEP 10% Off Campaign Request");
-        body.append("Offer", "AEP 10% off first campaign");
-        body.append("_template", "table");
-        body.append("_captcha", "false");
+        const response = await fetch(aepEndpoint, {
+          method: "POST",
+          body,
+          headers: { Accept: "application/json" },
+        });
 
-        const response = await fetch(
-          "https://formsubmit.co/ajax/Connect@zaidiconsultinggroup.com",
-          {
-            method: "POST",
-            body,
-            headers: { Accept: "application/json" },
-          }
-        );
-
-        if (!response.ok) throw new Error("Submit failed");
-
-        status.hidden = false;
-        status.className = "aep-popup-status is-success";
-        status.textContent = "Thanks — check your inbox soon for your offer details.";
-        form.querySelector(".aep-popup-label")?.setAttribute("hidden", "");
-        emailInput.hidden = true;
-        submitBtn.hidden = true;
-        sessionStorage.setItem(aepStorageKey, "1");
-        window.setTimeout(close, 2200);
+        if (!response.ok) throw new Error("ajax failed");
+        markSuccess();
       } catch (_err) {
-        status.hidden = false;
-        status.className = "aep-popup-status is-error";
-        status.textContent = "Something went wrong. Please email Connect@zaidiconsultinggroup.com.";
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalLabel || "Get 10% Off";
+        try {
+          await submitViaIframe(email);
+          markSuccess();
+        } catch (_iframeErr) {
+          status.hidden = false;
+          status.className = "aep-popup-status is-error";
+          status.textContent =
+            "We couldn’t send that just now. Please email Connect@zaidiconsultinggroup.com.";
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel || "Get 10% Off";
+        }
       }
     });
 
-    root.querySelector(".aep-popup-backdrop")?.addEventListener("click", close);
     root.querySelector(".aep-popup-close")?.addEventListener("click", close);
+    root.querySelector(".aep-popup-backdrop")?.addEventListener("click", close);
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && root.classList.contains("is-open")) close();
@@ -308,7 +366,7 @@
       document.body.classList.add("aep-popup-open");
       root.classList.add("is-open");
       emailInput?.focus();
-    }, 500);
+    }, 400);
   };
 
   if (document.readyState === "loading") {
