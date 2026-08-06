@@ -375,34 +375,89 @@
     showAepPopup();
   }
 
+  const loadPuter = () =>
+    new Promise((resolve, reject) => {
+      if (window.puter?.ai?.chat) {
+        resolve(window.puter);
+        return;
+      }
+      const existing = document.querySelector('script[data-puter="1"]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.puter), { once: true });
+        existing.addEventListener("error", () => reject(new Error("Puter failed to load")), {
+          once: true,
+        });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://js.puter.com/v2/";
+      script.async = true;
+      script.dataset.puter = "1";
+      script.onload = () => resolve(window.puter);
+      script.onerror = () => reject(new Error("Puter failed to load"));
+      document.head.appendChild(script);
+    });
+
   const initChatWidget = () => {
     if (document.querySelector(".chat-widget")) return;
 
-    const faqReplies = [
+    const knowledge = `
+You are the live AI assistant for Zaidi Consulting Group (ZCG), a healthcare and business consulting firm founded in 2022.
+Website: https://www.zaidiconsultinggroup.com
+Contact: Connect@zaidiconsultinggroup.com | +1 512.851.9610
+
+SERVICES:
+1) Revenue Cycle Management — billing accuracy, denial reduction, collections optimization, reporting, process documentation, team enablement.
+2) Performance Marketing — channel strategy, creative testing, analytics, attribution, and pre-qualified high-intent call generation across different verticals (core: Medicare, ACA, Final Expense; plus custom verticals). AEP campaign support available.
+3) Remote Staffing Solutions / Healthcare Staffing — role design, sourcing/screening/onboarding, productivity systems, flexible staffing models for healthcare organizations.
+
+GUIDELINES:
+- Be analytical, clear, and practical. Prefer structured reasoning over vague claims.
+- Answer questions about ZCG services in depth. Use the knowledge above first.
+- When the user asks for current market facts, regulations, benchmarks, news, or anything outside the website knowledge, use web_search and/or fetch_url tools and cite sources briefly.
+- Use fetch_site_page to pull live wording from ZCG pages when helpful.
+- If unsure, say what you know, what is uncertain, and suggest contacting the ZCG team.
+- Keep replies concise (usually 2–6 short paragraphs or bullets). No fluff.
+- Do not invent client results or pricing. Pricing depends on scope; invite them to contact the team.
+- You may recommend relevant site pages: /services/revenue-cycle/, /services/performance-marketing/, /services/remote-staffing/, /articles/, /contact/.
+`.trim();
+
+    const history = [{ role: "system", content: knowledge }];
+
+    const siteTools = [
       {
-        keys: ["revenue", "rcm", "billing", "denial", "collections", "claim"],
-        reply:
-          "Our Revenue Cycle Management work helps improve billing accuracy, reduce denials, and strengthen collections. You can learn more on our Revenue Cycle page, or leave your email and question below and our team will follow up.",
+        type: "function",
+        function: {
+          name: "fetch_site_page",
+          description:
+            "Fetch readable text from a Zaidi Consulting Group website page (path or full ZCG URL).",
+          parameters: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                description:
+                  "Site path like /services/revenue-cycle/ or a full https://www.zaidiconsultinggroup.com URL",
+              },
+            },
+            required: ["path"],
+          },
+        },
       },
       {
-        keys: ["marketing", "call", "campaign", "aep", "medicare", "aca", "lead"],
-        reply:
-          "Performance Marketing at ZCG focuses on channel strategy, creative testing, analytics, and pre-qualified high-intent calls across different verticals. Share your question with your email and we’ll get back to you.",
-      },
-      {
-        keys: ["staff", "staffing", "remote", "hire", "talent", "workforce"],
-        reply:
-          "Our Remote Staffing Solutions help healthcare organizations design roles, source talent, and manage quality for distributed teams. Send your question with your email and a teammate will reach out.",
-      },
-      {
-        keys: ["price", "pricing", "cost", "quote", "rate"],
-        reply:
-          "Pricing depends on scope, volume, and timeline. Leave your email and a short note about what you need, and we’ll follow up with next steps.",
-      },
-      {
-        keys: ["contact", "talk", "call me", "human", "team"],
-        reply:
-          "Happy to connect you with the team. Add your email below with your question, or visit the Contact Us page anytime.",
+        type: "function",
+        function: {
+          name: "fetch_url",
+          description:
+            "Attempt to fetch readable text from a public HTTPS URL for research. Prefer web_search for broad external research.",
+          parameters: {
+            type: "object",
+            properties: {
+              url: { type: "string", description: "Public HTTPS URL to fetch" },
+            },
+            required: ["url"],
+          },
+        },
       },
     ];
 
@@ -412,30 +467,32 @@
       <div class="chat-panel" id="chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title">
         <div class="chat-header">
           <div>
-            <h2 id="chat-title">Chat with ZCG</h2>
-            <p>Ask a question — we’ll help or connect you with our team.</p>
+            <h2 id="chat-title">ZCG Live Assistant</h2>
+            <p>Ask anything about our services — I can research and reason through answers.</p>
           </div>
           <button class="chat-close" type="button" aria-label="Close chat">&times;</button>
         </div>
         <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
         <div class="chat-quick" id="chat-quick">
-          <button type="button" data-quick="Tell me about Revenue Cycle Management">Revenue Cycle</button>
-          <button type="button" data-quick="Tell me about Performance Marketing">Performance Marketing</button>
-          <button type="button" data-quick="Tell me about Remote Staffing">Remote Staffing</button>
-          <button type="button" data-quick="I want to talk with your team">Talk to the team</button>
+          <button type="button" data-quick="What does your Revenue Cycle Management service include?">Revenue Cycle</button>
+          <button type="button" data-quick="How does Performance Marketing and call generation work at ZCG?">Performance Marketing</button>
+          <button type="button" data-quick="How can Remote Staffing help a healthcare organization scale?">Remote Staffing</button>
+          <button type="button" data-quick="What should we prepare before AEP for insurance call campaigns?">AEP prep</button>
         </div>
         <form class="chat-composer" id="chat-form">
-          <div>
-            <label for="chat-email">Email</label>
-            <input id="chat-email" name="email" type="email" placeholder="you@company.com" autocomplete="email" required />
+          <div class="chat-composer-row chat-composer-main">
+            <label class="chat-sr-only" for="chat-message">Your question</label>
+            <textarea id="chat-message" name="message" rows="2" placeholder="Ask about our services..." required></textarea>
+            <button class="btn btn-primary" type="submit" id="chat-submit">Send</button>
           </div>
-          <div>
-            <label for="chat-message">Your question</label>
-            <div class="chat-composer-row">
-              <textarea id="chat-message" name="message" rows="2" placeholder="Type your question..." required></textarea>
-              <button class="btn btn-primary" type="submit" id="chat-submit">Send</button>
+          <details class="chat-handoff">
+            <summary>Want a human follow-up?</summary>
+            <div class="chat-handoff-fields">
+              <label for="chat-email">Email</label>
+              <input id="chat-email" name="email" type="email" placeholder="you@company.com" autocomplete="email" />
+              <button class="btn btn-outline" type="button" id="chat-handoff-btn">Email the team</button>
             </div>
-          </div>
+          </details>
           <p class="chat-status" id="chat-status" hidden></p>
         </form>
       </div>
@@ -443,7 +500,7 @@
         <svg class="chat-launcher-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4.5 6.75h15a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5H9l-3.75 3v-3H4.5a1.5 1.5 0 0 1-1.5-1.5v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" />
         </svg>
-        <span class="chat-launcher-label">Chat with us</span>
+        <span class="chat-launcher-label">Live chat</span>
       </button>
     `;
 
@@ -457,24 +514,262 @@
     const emailInput = widget.querySelector("#chat-email");
     const messageInput = widget.querySelector("#chat-message");
     const submitBtn = widget.querySelector("#chat-submit");
+    const handoffBtn = widget.querySelector("#chat-handoff-btn");
     const status = widget.querySelector("#chat-status");
     const quickWrap = widget.querySelector("#chat-quick");
 
-    const addBubble = (text, who) => {
-      const bubble = document.createElement("div");
-      bubble.className = "chat-bubble is-" + who;
-      bubble.textContent = text;
-      messages.appendChild(bubble);
-      messages.scrollTop = messages.scrollHeight;
+    const escapeHtml = (value) =>
+      value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const formatReply = (text) => {
+      const escaped = escapeHtml(text.trim());
+      return escaped
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/^### (.+)$/gm, '<div class="chat-md-h">$1</div>')
+        .replace(/^## (.+)$/gm, '<div class="chat-md-h">$1</div>')
+        .replace(/^- (.+)$/gm, "<div>• $1</div>")
+        .replace(/\n\n/g, "<br><br>")
+        .replace(/\n/g, "<br>");
     };
 
-    const findFaqReply = (text) => {
-      const lower = text.toLowerCase();
-      const match = faqReplies.find((item) => item.keys.some((key) => lower.includes(key)));
-      return (
-        match?.reply ||
-        "Thanks for your question. Share your email (if you haven’t already) and send your message — our team will follow up by email shortly."
+    const addBubble = (text, who, asHtml = false) => {
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble is-" + who;
+      if (asHtml) bubble.innerHTML = text;
+      else bubble.textContent = text;
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+      return bubble;
+    };
+
+    const addTyping = () => {
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble is-bot is-typing";
+      bubble.innerHTML = "<span></span><span></span><span></span>";
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+      return bubble;
+    };
+
+    const needsWebSearch = (text) =>
+      /(latest|current|today|news|regulation|cms|benchmark|market|trend|statistic|data|research|compare|202[4-9]|aep dates|open enrollment|external|source|study|according|what is|how does|vs\.?|versus)/i.test(
+        text
       );
+
+    const extractText = (response) => {
+      if (response == null) return "";
+      if (typeof response === "string") return response;
+      if (typeof response?.message?.content === "string") return response.message.content;
+      if (Array.isArray(response?.message?.content)) {
+        return response.message.content
+          .map((part) => (typeof part === "string" ? part : part?.text || ""))
+          .join("");
+      }
+      if (typeof response?.text === "string") return response.text;
+      if (typeof response?.content === "string") return response.content;
+      return String(response);
+    };
+
+    const htmlToText = (html) =>
+      html
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 9000);
+
+    const isAllowedUrl = (urlString) => {
+      try {
+        const url = new URL(urlString, window.location.origin);
+        if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+        const host = url.hostname.toLowerCase();
+        return (
+          host === window.location.hostname ||
+          host === "www.zaidiconsultinggroup.com" ||
+          host === "zaidiconsultinggroup.com" ||
+          host === "zcgllc.github.io" ||
+          host.endsWith(".gov") ||
+          host.endsWith(".edu") ||
+          host.includes("cms.gov") ||
+          host.includes("healthcare.gov")
+        );
+      } catch (_err) {
+        return false;
+      }
+    };
+
+    const runTool = async (name, args) => {
+      try {
+        if (name === "fetch_site_page") {
+          const path = String(args?.path || "").trim();
+          if (!path) return "Missing path.";
+          const url = new URL(path, window.location.origin).href;
+          if (!isAllowedUrl(url)) return "That URL is not allowed for site fetch.";
+          const response = await fetch(url, { credentials: "omit" });
+          if (!response.ok) return `Failed to fetch page (${response.status}).`;
+          return htmlToText(await response.text()) || "No readable text found.";
+        }
+        if (name === "fetch_url") {
+          const url = String(args?.url || "").trim();
+          if (!url || !isAllowedUrl(url)) {
+            return "URL not allowed. Prefer web_search for general external research, or a .gov/.edu/ZCG URL.";
+          }
+          const response = await fetch(url, { credentials: "omit" });
+          if (!response.ok) return `Failed to fetch URL (${response.status}).`;
+          return htmlToText(await response.text()) || "No readable text found.";
+        }
+        return `Unknown tool: ${name}`;
+      } catch (err) {
+        return `Tool error: ${err?.message || "request failed"}`;
+      }
+    };
+
+    const collectStream = async (response, onText) => {
+      let full = "";
+      const toolCalls = [];
+      if (response && typeof response[Symbol.asyncIterator] === "function") {
+        for await (const part of response) {
+          if (part?.type === "tool_use" || part?.name) {
+            toolCalls.push(part);
+            continue;
+          }
+          const chunk =
+            part?.text ||
+            (part?.type === "text" ? part.text : "") ||
+            part?.message?.content ||
+            "";
+          if (!chunk) continue;
+          full += chunk;
+          if (onText) onText(full);
+        }
+        return { full, toolCalls };
+      }
+      full = extractText(response);
+      if (onText && full) onText(full);
+      return { full, toolCalls };
+    };
+
+    const askAssistant = async (question) => {
+      const typing = addTyping();
+      status.hidden = true;
+
+      try {
+        const puter = await loadPuter();
+        history.push({ role: "user", content: question });
+
+        const useSearch = needsWebSearch(question);
+        const model = useSearch ? "openai/gpt-5.3-chat" : "gpt-5.4-nano";
+        const tools = useSearch
+          ? [{ type: "web_search" }, ...siteTools]
+          : siteTools;
+
+        const chatOnce = async (messages, opts) => {
+          try {
+            return await puter.ai.chat(messages, opts);
+          } catch (_err) {
+            const prompt =
+              knowledge +
+              "\n\nConversation so far:\n" +
+              messages
+                .filter((m) => m.role !== "system")
+                .map((m) => {
+                  if (m.role === "tool") return `TOOL(${m.name || "result"}): ${m.content}`;
+                  return `${String(m.role).toUpperCase()}: ${m.content || ""}`;
+                })
+                .join("\n") +
+              "\nASSISTANT:";
+            return puter.ai.chat(prompt, opts);
+          }
+        };
+
+        let options = { model, stream: true, temperature: 0.35, tools };
+        let response;
+        try {
+          response = await chatOnce(history, options);
+        } catch (_err) {
+          options = { model: "gpt-5.4-nano", stream: true, temperature: 0.35, tools: siteTools };
+          response = await chatOnce(history, options);
+        }
+
+        typing.remove();
+        const bubble = addBubble("", "bot", true);
+        let { full, toolCalls } = await collectStream(response, (text) => {
+          bubble.innerHTML = formatReply(text);
+          messages.scrollTop = messages.scrollHeight;
+        });
+
+        // Resolve custom tool calls (site/URL fetch), then ask the model again.
+        if (toolCalls.length) {
+          bubble.innerHTML = formatReply(full || "Researching…");
+          const followMessages = history.slice();
+          for (const call of toolCalls) {
+            const name = call.name || call?.function?.name || "";
+            const args =
+              call.input ||
+              (typeof call?.function?.arguments === "string"
+                ? JSON.parse(call.function.arguments || "{}")
+                : call?.function?.arguments || {});
+            const result = await runTool(name, args);
+            followMessages.push({
+              role: "assistant",
+              tool_calls: [
+                {
+                  id: call.id || `tool_${Date.now()}`,
+                  type: "function",
+                  function: { name, arguments: JSON.stringify(args || {}) },
+                },
+              ],
+            });
+            followMessages.push({
+              role: "tool",
+              tool_call_id: call.id || `tool_${Date.now()}`,
+              name,
+              content: result,
+            });
+          }
+          const followUp = await chatOnce(followMessages, {
+            model: options.model,
+            stream: true,
+            temperature: 0.35,
+          });
+          const second = await collectStream(followUp, (text) => {
+            bubble.innerHTML = formatReply(text);
+            messages.scrollTop = messages.scrollHeight;
+          });
+          full = second.full || full;
+        }
+
+        if (!full.trim()) {
+          bubble.textContent =
+            "I couldn’t generate a reply just now. Please try again, or email Connect@zaidiconsultinggroup.com.";
+        } else {
+          history.push({ role: "assistant", content: full.trim() });
+          // Keep history bounded for long sessions.
+          if (history.length > 24) {
+            history.splice(1, history.length - 21);
+          }
+        }
+      } catch (err) {
+        typing.remove();
+        addBubble(
+          "I had trouble connecting to the live assistant. Please try again in a moment, or email Connect@zaidiconsultinggroup.com. If a sign-in prompt appears, complete it to continue the AI chat.",
+          "bot"
+        );
+        status.hidden = false;
+        status.className = "chat-status is-error";
+        status.textContent = "Live assistant unavailable right now.";
+        console.error(err);
+      }
     };
 
     const setOpen = (open) => {
@@ -484,10 +779,11 @@
       if (open) {
         if (!messages.dataset.ready) {
           addBubble(
-            "Hi — welcome to Zaidi Consulting Group. Ask about Revenue Cycle, Performance Marketing, Remote Staffing, or leave any question for our team.",
+            "Hi — I’m the ZCG live assistant. Ask me anything about Revenue Cycle, Performance Marketing, Remote Staffing, AEP campaigns, or related healthcare operations. I can reason through answers and pull in external research when needed.",
             "bot"
           );
           messages.dataset.ready = "1";
+          loadPuter().catch(() => {});
         }
         messageInput?.focus();
       }
@@ -499,53 +795,60 @@
     closeBtn?.addEventListener("click", () => setOpen(false));
 
     quickWrap?.querySelectorAll("button[data-quick]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const value = btn.getAttribute("data-quick") || "";
-        if (messageInput) messageInput.value = value;
-        addBubble(findFaqReply(value), "bot");
-        messageInput?.focus();
+        if (!value || submitBtn.disabled) return;
+        addBubble(value, "user");
+        submitBtn.disabled = true;
+        await askAssistant(value);
+        submitBtn.disabled = false;
       });
+    });
+
+    messageInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        form?.requestSubmit();
+      }
     });
 
     form?.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!emailInput || !messageInput || !submitBtn || !status) return;
-
-      const email = emailInput.value.trim();
+      if (!messageInput || !submitBtn) return;
       const question = messageInput.value.trim();
+      if (!question || submitBtn.disabled) return;
+      addBubble(question, "user");
+      messageInput.value = "";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Thinking...";
+      await askAssistant(question);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send";
+      messageInput.focus();
+    });
+
+    handoffBtn?.addEventListener("click", async () => {
+      if (!emailInput || !status) return;
+      const email = emailInput.value.trim();
+      const lastUser = [...history].reverse().find((m) => m.role === "user")?.content || "";
       if (!email || !emailInput.checkValidity()) {
         status.hidden = false;
         status.className = "chat-status is-error";
-        status.textContent = "Please enter a valid email address.";
+        status.textContent = "Enter a valid email for follow-up.";
         emailInput.focus();
         return;
       }
-      if (!question) {
-        status.hidden = false;
-        status.className = "chat-status is-error";
-        status.textContent = "Please type your question.";
-        messageInput.focus();
-        return;
-      }
 
-      addBubble(question, "user");
-      const original = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Sending...";
-      status.hidden = true;
-
+      handoffBtn.disabled = true;
+      handoffBtn.textContent = "Sending...";
       const body = new FormData();
       body.append("email", email);
-      body.append("message", question);
-      body.append("_subject", "Website chat question — Zaidi Consulting Group");
-      body.append("Source", "Website chatbox");
+      body.append("message", lastUser || "Website chat follow-up request");
+      body.append("_subject", "Live chat follow-up — Zaidi Consulting Group");
+      body.append("Source", "Live AI chatbox");
       body.append("_template", "table");
       body.append("_captcha", "false");
       body.append("_replyto", email);
-      body.append(
-        "_autoresponse",
-        "Thanks for contacting Zaidi Consulting Group. We received your question and will follow up shortly. — ZCG Team"
-      );
 
       try {
         const response = await fetch(
@@ -556,29 +859,18 @@
             headers: { Accept: "application/json" },
           }
         );
-        if (!response.ok) throw new Error("Chat submit failed");
-
-        addBubble(findFaqReply(question), "bot");
-        addBubble(
-          "Your question was sent to our team. We’ll reply to " + email + " soon.",
-          "bot"
-        );
+        if (!response.ok) throw new Error("handoff failed");
         status.hidden = false;
         status.className = "chat-status is-success";
-        status.textContent = "Message sent. Check your email for a confirmation.";
-        messageInput.value = "";
+        status.textContent = "Sent — our team will follow up by email.";
+        addBubble("Thanks — I shared your conversation request with the ZCG team.", "bot");
       } catch (_err) {
         status.hidden = false;
         status.className = "chat-status is-error";
-        status.textContent =
-          "We couldn’t send that just now. Please email Connect@zaidiconsultinggroup.com.";
-        addBubble(
-          "I couldn’t send that through chat just now. Please email Connect@zaidiconsultinggroup.com and we’ll help right away.",
-          "bot"
-        );
+        status.textContent = "Couldn’t send follow-up. Email Connect@zaidiconsultinggroup.com.";
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = original || "Send";
+        handoffBtn.disabled = false;
+        handoffBtn.textContent = "Email the team";
       }
     });
 
