@@ -946,14 +946,14 @@ select {
 
 /* ——— Responsive ——— */
 @media (max-width: 900px) {
-  .why-grid,
-  .testimonial-grid {
+  .why-grid {
     grid-template-columns: 1fr;
     gap: 1.75rem;
   }
 
   .testimonial-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 1.75rem;
   }
 
   .service-detail,
@@ -1040,5 +1040,9 @@ select {
 
   .footer-contact {
     text-align: left;
+  }
+
+  .testimonial-grid {
+    grid-template-columns: 1fr;
   }
 }
