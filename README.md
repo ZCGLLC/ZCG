@@ -1,11 +1,12 @@
 # Zaidi Consulting Group
 
-Professional three-page website for Zaidi Consulting Group.
+Professional website for Zaidi Consulting Group.
 
 ## Pages
 
 - **Home** (`/`) — brand introduction and service overview
 - **Our Services** (`/services/`) — Revenue Cycle Management, Performance Marketing, Remote Staffing Solutions
+- **Articles** (`/articles/`) — latest industry updates and insights
 - **Contact Us** (`/contact/`) — contact details and inquiry form
 
 ## Run locally
