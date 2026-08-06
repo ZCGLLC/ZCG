@@ -45,13 +45,57 @@
   }
 
   if (form) {
-    form.addEventListener("submit", (event) => {
+    const success = document.querySelector("#form-success");
+    const error = document.querySelector("#form-error");
+    const submitBtn = document.querySelector("#contact-submit");
+    const endpoint =
+      form.getAttribute("action") ||
+      "https://formsubmit.co/ajax/Connect@zaidiconsultinggroup.com";
+
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const success = document.querySelector("#form-success");
-      form.reset();
-      if (success) {
-        success.classList.add("is-visible");
-        success.focus?.();
+      success?.classList.remove("is-visible");
+      if (error) {
+        error.hidden = true;
+        error.classList.remove("is-visible");
+      }
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const originalLabel = submitBtn?.textContent;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending...";
+      }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { Accept: "application/json" },
+        });
+
+        if (!response.ok) throw new Error("Form submit failed");
+
+        form.reset();
+        if (success) {
+          success.classList.add("is-visible");
+          success.focus?.();
+        }
+      } catch (_err) {
+        if (error) {
+          error.hidden = false;
+          error.classList.add("is-visible");
+          error.focus?.();
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel || "Submit Message";
+        }
       }
     });
   }
