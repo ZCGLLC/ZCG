@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zcgllc.github.io/ZCG/sitemap.xml
