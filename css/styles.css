@@ -288,6 +288,7 @@ select {
   position: absolute;
   inset: 0;
   z-index: 0;
+  background: var(--ink);
 }
 
 .hero-media img {
@@ -297,14 +298,27 @@ select {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transform: scale(1.06);
-  transition: opacity 1.4s ease, transform 8s ease-out;
   z-index: 0;
+  animation: hero-slide 20s infinite;
+}
+
+.hero-media img:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.hero-media img:nth-child(2) {
+  animation-delay: 5s;
+}
+
+.hero-media img:nth-child(3) {
+  animation-delay: 10s;
+}
+
+.hero-media img:nth-child(4) {
+  animation-delay: 15s;
 }
 
 .hero-media img.is-active {
-  opacity: 1;
-  transform: scale(1);
   z-index: 1;
 }
 
@@ -316,6 +330,24 @@ select {
   background:
     linear-gradient(180deg, rgba(14, 26, 34, 0.45) 0%, rgba(14, 26, 34, 0.28) 35%, rgba(14, 26, 34, 0.78) 100%),
     linear-gradient(115deg, rgba(14, 26, 34, 0.55) 0%, transparent 55%);
+}
+
+@keyframes hero-slide {
+  0% {
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 1;
+  }
+  29% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .hero-content {
@@ -1140,12 +1172,13 @@ select {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-media img {
-    transition: opacity 0.5s ease;
-    transform: none;
+    animation: none;
+    opacity: 0;
   }
 
+  .hero-media img:first-child,
   .hero-media img.is-active {
-    transform: none;
+    opacity: 1;
   }
 }
 
