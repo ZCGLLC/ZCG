@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://zcgllc.github.io/ZCG/sitemap.xml
+Sitemap: https://www.zaidiconsultinggroup.com/sitemap.xml
