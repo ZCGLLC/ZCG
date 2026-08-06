@@ -186,7 +186,10 @@
 
   const aepStorageKey = "zcg-aep-popup-dismissed";
   const resolveContactHref = () => {
-    const parts = window.location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+    const parts = window.location.pathname
+      .replace(/\/+$/, "")
+      .split("/")
+      .filter((part) => part && part !== "index.html");
     const rootIdx = parts[0] === "ZCG" ? 1 : 0;
     const relative = parts.slice(rootIdx);
     if (relative.length === 0) return "contact/";
