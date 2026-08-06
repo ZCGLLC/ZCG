@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us | Zaidi Consulting Group</title>
+    <meta
+      name="description"
+      content="Contact Zaidi Consulting Group to discuss Revenue Cycle Management, Performance Marketing, or Remote Staffing Solutions."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header solid">
+      <div class="nav-inner">
+        <a class="brand" href="index.html">
+          Zaidi Consulting Group
+          <span>Advisory &amp; Operations</span>
+        </a>
+        <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+          <span></span>
+        </button>
+        <nav class="nav-links" aria-label="Primary">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link" href="services.html">Our Services</a>
+          <a class="nav-link is-active" href="contact.html">Contact Us</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="page-hero-media" aria-hidden="true">
+          <img
+            src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1800&q=80"
+            alt=""
+          />
+        </div>
+        <div class="page-hero-content">
+          <h1>Contact Us</h1>
+          <p>Share a bit about your organization—we’ll respond with next steps for a focused conversation.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container contact-layout">
+          <div class="contact-info reveal">
+            <h2>Let’s build a clearer path forward.</h2>
+            <p>
+              Whether you need stronger revenue operations, sharper marketing performance, or reliable remote talent,
+              we’re ready to help you plan the work.
+            </p>
+            <dl class="contact-details">
+              <div>
+                <dt>Email</dt>
+                <dd><a href="mailto:hello@zaidiconsulting.com">hello@zaidiconsulting.com</a></dd>
+              </div>
+              <div>
+                <dt>Phone</dt>
+                <dd><a href="tel:+15551234567">(555) 123-4567</a></dd>
+              </div>
+              <div>
+                <dt>Hours</dt>
+                <dd>Monday – Friday, 9:00 AM – 5:00 PM</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="contact-form reveal">
+            <h3>Send a message</h3>
+            <form id="contact-form" novalidate>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="first-name">First name</label>
+                  <input id="first-name" name="firstName" type="text" autocomplete="given-name" required />
+                </div>
+                <div class="form-field">
+                  <label for="last-name">Last name</label>
+                  <input id="last-name" name="lastName" type="text" autocomplete="family-name" required />
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" autocomplete="email" required />
+              </div>
+              <div class="form-field">
+                <label for="company">Company</label>
+                <input id="company" name="company" type="text" autocomplete="organization" />
+              </div>
+              <div class="form-field">
+                <label for="service">Service of interest</label>
+                <select id="service" name="service">
+                  <option value="">Select a service</option>
+                  <option value="revenue-cycle">Revenue Cycle Management</option>
+                  <option value="performance-marketing">Performance Marketing</option>
+                  <option value="remote-staffing">Remote Staffing Solutions</option>
+                  <option value="general">General inquiry</option>
+                </select>
+              </div>
+              <div class="form-field full">
+                <label for="message">How can we help?</label>
+                <textarea id="message" name="message" required></textarea>
+              </div>
+              <button class="btn btn-primary" type="submit">Submit Message</button>
+              <p class="form-success" id="form-success" tabindex="-1" role="status">
+                Thank you—your message has been received. We’ll be in touch shortly.
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-top">
+          <div>
+            <p class="footer-brand">Zaidi Consulting Group</p>
+            <p>Revenue, marketing, and staffing counsel for ambitious organizations.</p>
+          </div>
+          <nav class="footer-nav" aria-label="Footer">
+            <a href="index.html">Home</a>
+            <a href="services.html">Our Services</a>
+            <a href="contact.html">Contact Us</a>
+          </nav>
+        </div>
+        <p class="footer-bottom">&copy; <span id="year"></span> Zaidi Consulting Group. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
