@@ -409,7 +409,7 @@
     const widget = document.createElement("div");
     widget.className = "chat-widget";
     widget.innerHTML = `
-      <div class="chat-panel" id="chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title" hidden>
+      <div class="chat-panel" id="chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title">
         <div class="chat-header">
           <div>
             <h2 id="chat-title">Chat with ZCG</h2>
@@ -478,7 +478,6 @@
     };
 
     const setOpen = (open) => {
-      panel.hidden = !open;
       panel.classList.toggle("is-open", open);
       launcher.setAttribute("aria-expanded", String(open));
       panel.setAttribute("aria-modal", String(open));
