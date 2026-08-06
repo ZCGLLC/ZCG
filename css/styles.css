@@ -473,13 +473,13 @@ select {
   color: var(--ink-soft);
 }
 
-/* Balanced gap between Our story and What we do */
+/* Clear gap between Our story and What we do */
 #who-we-are {
-  padding-bottom: 2.5rem;
+  padding-bottom: 5.5rem;
 }
 
 #who-we-are + .section {
-  padding-top: 2.5rem;
+  padding-top: 5.5rem;
 }
 
 #who-we-are .about-prose {
