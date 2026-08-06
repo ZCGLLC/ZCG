@@ -473,6 +473,15 @@ select {
   color: var(--ink-soft);
 }
 
+/* Tighten the gap between Our story and What we do */
+#who-we-are {
+  padding-bottom: 1.75rem;
+}
+
+#who-we-are + .section {
+  padding-top: 2rem;
+}
+
 .section-ink .section-lead {
   color: rgba(255, 255, 255, 0.72);
 }
