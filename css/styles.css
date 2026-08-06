@@ -843,9 +843,33 @@ select {
 }
 
 .footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  flex-wrap: wrap;
   padding-top: 1.5rem;
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.45);
+}
+
+.footer-contact {
+  color: rgba(255, 255, 255, 0.62);
+  text-align: right;
+}
+
+.footer-contact a {
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.footer-contact a:hover {
+  color: var(--white);
+}
+
+.footer-contact-sep {
+  margin: 0 0.45rem;
+  opacity: 0.55;
 }
 
 /* ——— Reveal on scroll ——— */
