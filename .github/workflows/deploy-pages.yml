@@ -27,8 +27,8 @@ jobs:
       - name: Prepare site files
         run: |
           mkdir -p _site
-          cp index.html services.html contact.html favicon.svg robots.txt sitemap.xml _site/
-          cp -r css js images contact services _site/
+          cp index.html services.html contact.html articles.html favicon.svg robots.txt sitemap.xml _site/
+          cp -r css js images contact services articles _site/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
