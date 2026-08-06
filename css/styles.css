@@ -460,6 +460,19 @@ select {
   margin-bottom: 2.5rem;
 }
 
+.about-prose {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 68ch;
+  margin-top: 0.5rem;
+}
+
+.about-prose p {
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
 .section-ink .section-lead {
   color: rgba(255, 255, 255, 0.72);
 }
