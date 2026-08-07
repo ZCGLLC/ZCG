@@ -379,40 +379,169 @@
     if (document.querySelector(".chat-widget")) return;
 
     const refusalMessage =
-      "I’m sorry, I cannot answer that. I focus on Zaidi Consulting Group topics — healthcare, insurance, medical billing / revenue cycle, performance marketing, remote staffing, and related content from our website.";
+      "I’m sorry, I can’t help with that. I advise on healthcare operations — medical billing / revenue cycle, insurance workflows, performance marketing, and remote staffing.";
 
     const conversation = [];
-    const siteKnowledge = String(window.ZCG_SITE_KNOWLEDGE || "").slice(0, 45000);
 
     const systemPrompt = [
-      "You are the official conversational AI assistant for Zaidi Consulting Group (ZCG), custom-tailored for https://www.zaidiconsultinggroup.com.",
-      "Founded in 2022. Contact: Connect@zaidiconsultinggroup.com | +1 512.851.9610",
+      "You are Zaidi Consulting Group (ZCG) — speak as the owner/operator and an expert researcher in healthcare revenue cycle, insurance operations, performance marketing, and remote staffing.",
+      "Founded 2022. Contact: Connect@zaidiconsultinggroup.com | +1 512.851.9610",
       "",
-      "PURPOSE:",
-      "- Hold natural, multi-turn conversations with website visitors.",
-      "- Answer questions about ZCG services, articles, company info, and all website content.",
-      "- Help with related healthcare, insurance, medical billing / RCM, performance marketing / demand generation, remote staffing, healthcare finance/operations, AEP, Medicare/ACA/Final Expense, and practical industry context.",
+      "VOICE:",
+      "- Use first-person plural (“we”, “our team”). Never say “according to the website”, “based on the site”, or “from our page”.",
+      "- Sound like a seasoned consultant: precise, practical, confident, concise.",
+      "- Lead with the direct answer, then give short structured detail (bullets).",
+      "- For industry topics (prior auth, denials, AEP, etc.), give an expert explanation AND how we help.",
+      "- Do not invent pricing, guarantees, or client results.",
       "",
-      "KNOWLEDGE PRIORITY:",
-      "1) Prefer official ZCG website content below when answering about ZCG.",
-      "2) Use general industry knowledge for related healthcare/insurance/billing/marketing/staffing questions.",
-      "3) If you use external/general knowledge beyond the site, say so briefly and keep advice practical (not legal/medical advice).",
-      "4) Never invent ZCG client results, pricing, or guarantees. Pricing depends on scope — invite contact.",
-      "",
-      "STYLE:",
-      "- Be analytical, clear, warm, and conversational.",
-      "- Remember prior turns and continue the thread naturally.",
-      "- Prefer structured answers (short paragraphs + bullets) when helpful.",
-      "- Keep replies focused; ask a clarifying question when the request is ambiguous.",
-      "",
-      "SCOPE / REFUSAL:",
-      "- Stay on ZCG + healthcare/insurance/billing/marketing/staffing/finance-operations topics and website content.",
-      "- If a question is clearly unrelated (sports scores, entertainment gossip, homework coding, recipes, etc.), reply EXACTLY:",
-      refusalMessage,
-      "",
-      "WEBSITE CONTENT (source of truth for ZCG):",
-      siteKnowledge || "(Site knowledge file not loaded — use known ZCG services: Revenue Cycle, Performance Marketing, Remote Staffing.)",
+      "SCOPE:",
+      "Answer healthcare, insurance, medical billing/RCM, prior authorization, claims/denials, performance marketing/demand gen, remote staffing, and related operations.",
+      "If clearly unrelated, reply with the refusal message only.",
     ].join("\n");
+
+    const expertTopics = [
+      {
+        id: "prior_auth",
+        match: /pre[-\s]?auth|prior\s*auth|preauthorization|authorization\s*request|auth\s*referral/i,
+        title: "Prior Authorization",
+        answer: [
+          "**Prior authorization** (also called pre-authorization) is a payer requirement: before certain services, drugs, or procedures are delivered, the provider must get approval that medical necessity criteria are met.",
+          "",
+          "**Why it matters**",
+          "- Missed or late auth is a major cause of denials and write-offs",
+          "- Incomplete clinical packets delay care and cash",
+          "- Poor tracking creates avoidable AR and patient friction",
+          "",
+          "**What a strong process looks like**",
+          "1. Identify auth-required codes/payers before scheduling",
+          "2. Submit complete clinical documentation the first time",
+          "3. Track status to approval (or appeal) with clear owners",
+          "4. Verify auth is valid on the date of service",
+          "5. Tie auth outcomes into denial prevention reporting",
+          "",
+          "**How we help**",
+          "We harden front-end revenue cycle workflows — eligibility, auth readiness, documentation standards, and denial root-cause loops — so fewer claims fail for preventable authorization issues.",
+          "",
+          "If you share your specialty and payer mix, I can outline a tighter auth checklist for your team.",
+        ].join("\n"),
+      },
+      {
+        id: "denials",
+        match: /denial|denied\s*claim|reject|write[-\s]?off/i,
+        title: "Claim Denials",
+        answer: [
+          "**Claim denials** happen when a payer refuses payment for a submitted claim. Most are preventable with cleaner front-end and coding controls.",
+          "",
+          "**Common root causes**",
+          "- Eligibility / coverage issues",
+          "- Missing or invalid prior authorization",
+          "- Coding / modifier errors",
+          "- Timely filing misses",
+          "- Incomplete clinical or demographic data",
+          "",
+          "**Our approach**",
+          "1. Segment denials by reason and payer",
+          "2. Fix the upstream process that created them",
+          "3. Standardize appeal playbooks for recoverable dollars",
+          "4. Install KPI reporting so leakage is visible weekly",
+          "",
+          "We treat denials as a process problem first, not just a back-end chase.",
+        ].join("\n"),
+      },
+      {
+        id: "billing",
+        match: /medical\s*bill|revenue\s*cycle|\brcm\b|claim|collections?|accounts?\s*receivable|\bar\b|coding|cpt|icd|reimburs|eligibility|payer/i,
+        title: "Medical Billing / Revenue Cycle",
+        answer: [
+          "**Medical billing / revenue cycle** is the full path from patient intake to clean payment: eligibility, authorization, coding, claim submission, denial management, and collections.",
+          "",
+          "**Where we focus**",
+          "- Billing accuracy and cleaner claim submission",
+          "- Denial reduction and root-cause correction",
+          "- Collections / AR discipline",
+          "- KPI reporting leadership can trust",
+          "- Process documentation and team enablement",
+          "",
+          "**How engagements usually run**",
+          "We assess current leakage points, redesign the workflow, then execute with clear owners and reporting so results hold after the project ends.",
+        ].join("\n"),
+      },
+      {
+        id: "marketing",
+        match: /performance\s*market|demand\s*gen|lead\s*gen|call\s*gen|pre-?qualified|campaign|attribution|paid\s*media|\bppc\b|aep|medicare|medicaid|\baca\b|final\s*expense/i,
+        title: "Performance Marketing",
+        answer: [
+          "**Performance marketing** for healthcare and insurance is about qualified pipeline — not vanity traffic.",
+          "",
+          "**What we deliver**",
+          "- Channel strategy tied to enrollment/sales outcomes",
+          "- Creative testing and conversion optimization",
+          "- Attribution and leadership-ready reporting",
+          "- Pre-qualified, high-intent inbound calls",
+          "",
+          "**Core call verticals**",
+          "- Medicare",
+          "- ACA",
+          "- Final Expense",
+          "- Custom verticals built around your offer and geography",
+          "",
+          "For AEP or enrollment spikes, we align creative, qualification rules, and call capacity so volume converts instead of overflowing the team.",
+        ].join("\n"),
+      },
+      {
+        id: "staffing",
+        match: /remote\s*staff|staffing|healthcare\s*staff|outsourc|\bbpo\b|recruit|virtual\s*assistant|hiring|hire/i,
+        title: "Remote Staffing",
+        answer: [
+          "**Remote staffing** works when roles, handoffs, and accountability are designed before headcount is added.",
+          "",
+          "**What we build**",
+          "- Role design and ownership clarity",
+          "- Sourcing, screening, and onboarding support",
+          "- Productivity systems and quality controls",
+          "- Flexible models for growth or seasonal demand",
+          "",
+          "We help healthcare and insurance teams scale capacity without losing service quality or operational control.",
+        ].join("\n"),
+      },
+      {
+        id: "services",
+        match: /services?|what do you (do|offer)|who are you|about zcg|zaidi|overview/i,
+        title: "Our Services",
+        answer: [
+          "We’re **Zaidi Consulting Group**. We help healthcare and insurance organizations improve three connected areas:",
+          "",
+          "1. **Medical Billing / Revenue Cycle** — cleaner claims, fewer denials, stronger collections",
+          "2. **Performance Marketing** — measurable campaigns and pre-qualified high-intent calls",
+          "3. **Remote Staffing** — flexible remote teams with clear ownership and quality",
+          "",
+          "Ask about any one of those and I’ll go deep on process, pitfalls, and how we’d approach it.",
+        ].join("\n"),
+      },
+      {
+        id: "contact",
+        match: /contact|email|phone|schedule|speak|talk to|follow[- ]?up/i,
+        title: "Contact",
+        answer: [
+          "Reach us directly:",
+          "",
+          "- **Email:** Connect@zaidiconsultinggroup.com",
+          "- **Phone:** +1 512.851.9610",
+          "",
+          "Or use **Email the team** below and we’ll follow up.",
+        ].join("\n"),
+      },
+      {
+        id: "pricing",
+        match: /pric|cost|how much|quote|proposal|rate card/i,
+        title: "Pricing",
+        answer: [
+          "Pricing depends on scope, volume, and which service line you need (billing, marketing, staffing, or a mix).",
+          "",
+          "We don’t publish one-size-fits-all rates because engagements are tailored. Share your goals at **Connect@zaidiconsultinggroup.com** and we’ll scope a practical plan.",
+        ].join("\n"),
+      },
+    ];
 
     const widget = document.createElement("div");
     widget.className = "chat-widget";
@@ -421,24 +550,24 @@
         <div class="chat-header">
           <div class="chat-header-copy">
             <div class="chat-header-top">
-              <h2 id="chat-title">ZCG Assistant</h2>
+              <h2 id="chat-title">ZCG Expert Chat</h2>
               <span class="chat-live-pill" aria-hidden="true">Live</span>
             </div>
-            <p>Healthcare · Insurance · Billing · Marketing · Staffing</p>
+            <p>Billing · Insurance · Marketing · Staffing</p>
           </div>
           <button class="chat-close" type="button" aria-label="Close chat">&times;</button>
         </div>
         <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
         <div class="chat-quick" id="chat-quick" aria-label="Suggested questions">
-          <button type="button" data-quick="What services does Zaidi Consulting Group offer?">Our services</button>
-          <button type="button" data-quick="How does ZCG improve medical billing and reduce claim denials?">Medical billing</button>
-          <button type="button" data-quick="How does performance marketing and high-intent call generation work at ZCG?">Marketing</button>
-          <button type="button" data-quick="How can remote staffing help a healthcare organization scale?">Staffing</button>
+          <button type="button" data-quick="Tell me about prior authorization">Prior auth</button>
+          <button type="button" data-quick="How do you reduce claim denials?">Denials</button>
+          <button type="button" data-quick="How does performance marketing and call generation work?">Marketing</button>
+          <button type="button" data-quick="How can remote staffing help us scale?">Staffing</button>
         </div>
         <form class="chat-composer" id="chat-form">
           <div class="chat-composer-row chat-composer-main">
             <label class="chat-sr-only" for="chat-message">Your question</label>
-            <textarea id="chat-message" name="message" rows="2" placeholder="Ask anything about our services or healthcare operations..." required></textarea>
+            <textarea id="chat-message" name="message" rows="2" placeholder="Ask about prior auth, denials, marketing, staffing..." required></textarea>
             <button class="btn btn-primary" type="submit" id="chat-submit">Send</button>
           </div>
           <details class="chat-handoff">
@@ -487,8 +616,9 @@
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/^### (.+)$/gm, '<div class="chat-md-h">$1</div>')
         .replace(/^## (.+)$/gm, '<div class="chat-md-h">$1</div>')
-        .replace(/^- (.+)$/gm, "<div>• $1</div>")
-        .replace(/\n\n/g, "<br><br>")
+        .replace(/^\d+\.\s+(.+)$/gm, '<div class="chat-li"><span class="chat-li-mark">•</span><span>$1</span></div>')
+        .replace(/^[-•]\s+(.+)$/gm, '<div class="chat-li"><span class="chat-li-mark">•</span><span>$1</span></div>')
+        .replace(/\n{2,}/g, '<div class="chat-gap"></div>')
         .replace(/\n/g, "<br>");
     };
 
@@ -520,7 +650,7 @@
       ) {
         return true;
       }
-      return /(contact|email|phone|schedule|speak (to|with)|talk to|human|follow[- ]?up|zaidi|zcg|website|article|service)/i.test(
+      return /(contact|email|phone|schedule|speak (to|with)|talk to|human|follow[- ]?up|zaidi|zcg|service)/i.test(
         t
       );
     };
@@ -529,114 +659,67 @@
       const t = text.trim();
       if (!t) return true;
       if (isGreetingOrMeta(t)) return false;
-      // Allow anything that looks related to ZCG / healthcare / insurance / business ops.
       if (
-        /(health\s*care|healthcare|insurance|medical|bill|billing|revenue|cycle|rcm|claim|denial|collection|coding|cpt|icd|payer|reimburs|medicare|medicaid|\baca\b|aep|final\s*expense|enrollment|marketing|demand|lead|call\s*gen|campaign|attribution|staff|staffing|recruit|outsourc|bpo|clinic|hospital|provider|practice|finance|operations|consult|zaidi|zcg|article|website|roi|kpi|compliance|hipaa|underwrit|eligibility|prior\s*auth)/i.test(
+        /(health\s*care|healthcare|insurance|medical|bill|billing|revenue|cycle|rcm|claim|denial|collection|coding|cpt|icd|payer|reimburs|medicare|medicaid|\baca\b|aep|final\s*expense|enrollment|marketing|demand|lead|call\s*gen|campaign|attribution|staff|staffing|recruit|outsourc|bpo|clinic|hospital|provider|practice|finance|operations|consult|zaidi|zcg|article|roi|kpi|compliance|hipaa|underwrit|eligibility|prior\s*auth|pre[-\s]?auth|preauthorization|authorization)/i.test(
           t
         )
       ) {
         return false;
       }
-      // Clearly unrelated domains
       if (
-        /(recipe|cook|football|nba|mlb|soccer|movie|netflix|celebrity|joke|horoscope|crypto\s*meme|python\s*game|leetcode|homework unrelated|weather in|lyrics)/i.test(
+        /(recipe|cook|football|nba|mlb|soccer|movie|netflix|celebrity|joke|horoscope|leetcode|lyrics)/i.test(
           t
         )
       ) {
         return true;
       }
-      // Ambiguous: let the tailored LLM decide using system scope rules.
       return false;
     };
 
-    const chatEndpoints = [
-      window.ZCG_CHAT_ENDPOINT,
-      "https://text.pollinations.ai/openai",
-    ].filter(Boolean);
-
-    const retrieveSiteContext = (question, limit = 3200) => {
-      const knowledge = String(window.ZCG_SITE_KNOWLEDGE || "");
-      if (!knowledge) return "";
-      const words = (question.toLowerCase().match(/[a-z0-9]{4,}/g) || []).filter(
-        (w, i, arr) => arr.indexOf(w) === i
-      );
-      const parts = knowledge.split("### ").filter(Boolean);
-      const scored = parts
-        .map((part) => {
-          const low = part.toLowerCase();
-          let score = 0;
-          for (const w of words) if (low.includes(w)) score += 1;
-          return { score, part: part.slice(0, 1600) };
-        })
-        .filter((item) => item.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
-      const joined = scored.map((item) => "### " + item.part).join("\n\n");
-      return joined.slice(0, limit);
+    const findExpertTopic = (question) => {
+      for (const topic of expertTopics) {
+        if (topic.match.test(question)) return topic;
+      }
+      return null;
     };
 
-    const buildLocalConversationalReply = (question) => {
-      const ctx = retrieveSiteContext(question, 2800);
-      const prior = conversation
-        .slice(-4)
-        .map((m) => m.role.toUpperCase() + ": " + m.content)
-        .join("\n");
-      const lower = question.toLowerCase();
-      const lines = [];
-
-      if (/^(hi|hello|hey)\b/i.test(question.trim())) {
-        return "Hi — I’m the ZCG assistant. Ask me about our website, healthcare consulting, insurance operations, medical billing, performance marketing, or remote staffing, and we can keep the conversation going.";
+    const buildExpertReply = (question) => {
+      const lower = question.toLowerCase().trim();
+      if (/^(hi|hello|hey|good\s+(morning|afternoon|evening))\b/i.test(lower)) {
+        return "Hi — I’m with Zaidi Consulting Group. Ask me about prior authorization, denials, medical billing, performance marketing, or remote staffing, and I’ll give you a clear expert answer.";
       }
-      if (/thank/i.test(lower) && lower.length < 40) {
-        return "You’re welcome. What else would you like to explore — billing, marketing, staffing, or something from our articles?";
-      }
-      if (/contact|email|phone|schedule|follow[- ]?up/i.test(lower)) {
-        return "You can reach Zaidi Consulting Group at **Connect@zaidiconsultinggroup.com** or **+1 512.851.9610**. You can also use “Email the team” in this chat, or visit /contact/.";
-      }
-      if (/pric|cost|how much|quote/i.test(lower)) {
-        return "Pricing depends on scope, volume, and which services you need (billing, marketing, staffing, or a mix). We don’t publish fixed public rates. Share your goals at **Connect@zaidiconsultinggroup.com** and the team can scope a tailored plan.";
+      if (/^(thanks|thank you)\b/i.test(lower)) {
+        return "Glad to help. What should we dig into next?";
       }
 
-      lines.push("Here’s a clear take based on Zaidi Consulting Group’s website and services:");
-      lines.push("");
+      const topic = findExpertTopic(question);
+      if (topic) return topic.answer;
 
-      if (/denial|claim|billing|revenue|rcm|collection|coding/i.test(lower)) {
-        lines.push("**Medical Billing / Revenue Cycle**");
-        lines.push("ZCG helps clinics and healthcare operators improve billing accuracy, reduce denials, strengthen collections, and install reporting/process discipline. Engagements usually start with assessment, then move into practical workflow fixes and team enablement.");
-      } else if (/market|campaign|aep|medicare|aca|call|demand|lead/i.test(lower)) {
-        lines.push("**Performance Marketing / Demand Generation**");
-        lines.push("ZCG focuses on measurable growth — channel strategy, creative testing, attribution, and pre-qualified high-intent calls across Medicare, ACA, Final Expense, and custom verticals, including AEP readiness.");
-      } else if (/staff|remote|hiring|recruit|outsourc/i.test(lower)) {
-        lines.push("**Remote Staffing**");
-        lines.push("ZCG designs remote staffing models with clear roles, sourcing/onboarding support, and productivity systems so healthcare/insurance teams can scale capacity without losing quality.");
-      } else if (/article|insight|blog/i.test(lower)) {
-        lines.push("**Articles & insights**");
-        lines.push("Our /articles/ library covers denials, collections, call campaigns, marketing ROI, and remote team design. Ask about a topic and I’ll pull the most relevant points.");
-      } else {
-        lines.push("**Zaidi Consulting Group** supports healthcare and insurance organizations with Medical Billing / RCM, Performance Marketing & Demand Generation, and Remote Staffing.");
+      // Follow-up awareness using last assistant topic keywords
+      const lastAssistant = [...conversation].reverse().find((m) => m.role === "assistant")?.content || "";
+      if (/more|deeper|explain|how|why|example/i.test(lower) && lastAssistant) {
+        const follow = findExpertTopic(lastAssistant);
+        if (follow) {
+          return (
+            follow.answer +
+            "\n\nIf you want this applied to your operation, tell me your specialty, monthly claim volume, or growth goal."
+          );
+        }
       }
 
-      if (ctx) {
-        lines.push("");
-        lines.push("From our site content:");
-        // keep short excerpt bullets
-        const excerpt = ctx
-          .replace(/### /g, "")
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 700);
-        lines.push(excerpt);
-      }
-
-      if (prior) {
-        lines.push("");
-        lines.push("I’m keeping our thread in mind — ask a follow-up and I’ll go deeper on the same topic.");
-      }
-
-      lines.push("");
-      lines.push("Next step: tell me your organization type and goal, or email **Connect@zaidiconsultinggroup.com**.");
-      return lines.join("\n");
+      return [
+        "I can help with the areas we specialize in:",
+        "",
+        "- **Prior authorization & revenue cycle**",
+        "- **Claim denials and collections**",
+        "- **Performance marketing / high-intent calls**",
+        "- **Remote staffing for healthcare teams**",
+        "",
+        "Ask a specific question — for example: “How should a clinic run prior auth?” — and I’ll answer precisely.",
+      ].join("\n");
     };
+
+    const chatEndpoint = window.ZCG_CHAT_ENDPOINT || "";
 
     const extractAssistantText = (data) => {
       if (!data) return "";
@@ -649,28 +732,32 @@
       return data?.choices?.[0]?.delta?.content || data?.content || "";
     };
 
-    const callLlm = async (messagesForModel, { stream = true, endpoint } = {}) => {
-      const url = endpoint || chatEndpoints[0];
-      const isWorker = /workers\.dev|ZCG_CHAT|\/chat$/i.test(url) || Boolean(window.ZCG_CHAT_ENDPOINT && url === window.ZCG_CHAT_ENDPOINT);
-      const body = {
-        model: window.ZCG_CHAT_MODEL || (isWorker ? "llama-3.3-70b-versatile" : "openai"),
-        messages: messagesForModel,
-        stream,
-        temperature: 0.45,
-      };
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: stream ? "text/event-stream, application/json" : "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) {
-        const errText = await response.text().catch(() => "");
-        throw new Error(`LLM HTTP ${response.status}: ${errText.slice(0, 180)}`);
+    const callWorkerLlm = async (messagesForModel, { stream = true } = {}) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        const response = await fetch(chatEndpoint, {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: stream ? "text/event-stream, application/json" : "application/json",
+          },
+          body: JSON.stringify({
+            model: window.ZCG_CHAT_MODEL || "llama-3.1-8b-instant",
+            messages: messagesForModel,
+            stream,
+            temperature: 0.35,
+          }),
+        });
+        if (!response.ok) {
+          const errText = await response.text().catch(() => "");
+          throw new Error(`LLM HTTP ${response.status}: ${errText.slice(0, 160)}`);
+        }
+        return response;
+      } finally {
+        clearTimeout(timer);
       }
-      return response;
     };
 
     const readStream = async (response, onChunk) => {
@@ -715,35 +802,6 @@
       return full;
     };
 
-    const fetchFreshSiteContext = async (question) => {
-      const t = question.toLowerCase();
-      let path = "";
-      if (/revenue|billing|denial|claim|rcm|collection/.test(t)) path = "/services/revenue-cycle/";
-      else if (/market|call|aep|medicare|aca|demand|campaign/.test(t))
-        path = "/services/performance-marketing/";
-      else if (/staff|remote|hiring|recruit/.test(t)) path = "/services/remote-staffing/";
-      else if (/article|insight|blog/.test(t)) path = "/articles/";
-      else if (/contact|email|phone|schedule/.test(t)) path = "/contact/";
-      if (!path) return "";
-      try {
-        const response = await fetch(new URL(path, window.location.origin).href, {
-          credentials: "omit",
-        });
-        if (!response.ok) return "";
-        const html = await response.text();
-        const text = html
-          .replace(/<script[\s\S]*?<\/script>/gi, " ")
-          .replace(/<style[\s\S]*?<\/style>/gi, " ")
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 2500);
-        return text ? `\n\nLIVE PAGE CONTEXT (${path}):\n${text}` : "";
-      } catch (_err) {
-        return "";
-      }
-    };
-
     const askAssistant = async (question) => {
       status.hidden = true;
 
@@ -756,57 +814,46 @@
       conversation.push({ role: "user", content: question });
 
       try {
-        const fresh = await fetchFreshSiteContext(question);
-        const retrieved = retrieveSiteContext(question);
-        const compactSystem = [
-          systemPrompt.split("WEBSITE CONTENT")[0].trim(),
-          "",
-          "RELEVANT WEBSITE EXCERPTS:",
-          retrieved || "(Use known ZCG services and prior conversation.)",
-          fresh,
-        ]
-          .join("\n")
-          .slice(0, 9000);
+        // Fast path: expert answers instantly when no private LLM worker is configured.
+        // This avoids slow/failing public LLM proxies.
+        if (!chatEndpoint) {
+          await new Promise((resolve) => setTimeout(resolve, 160));
+          const reply = buildExpertReply(question);
+          typing.remove();
+          addBubble(formatReply(reply), "bot", true);
+          conversation.push({ role: "assistant", content: reply });
+          if (conversation.length > 24) conversation.splice(0, conversation.length - 24);
+          return;
+        }
 
         const messagesForModel = [
-          { role: "system", content: compactSystem },
+          { role: "system", content: systemPrompt },
           ...conversation.slice(-12),
         ];
 
         let full = "";
-        let answered = false;
         typing.remove();
         const bubble = addBubble("", "bot", true);
 
-        for (const endpoint of chatEndpoints) {
+        try {
+          const response = await callWorkerLlm(messagesForModel, { stream: true });
+          full = await readStream(response, (text) => {
+            bubble.innerHTML = formatReply(text);
+            messages.scrollTop = messages.scrollHeight;
+          });
+        } catch (_streamErr) {
           try {
-            const response = await callLlm(messagesForModel, { stream: true, endpoint });
-            full = await readStream(response, (text) => {
-              bubble.innerHTML = formatReply(text);
-              messages.scrollTop = messages.scrollHeight;
-            });
-            if (String(full || "").trim()) {
-              answered = true;
-              break;
-            }
-          } catch (_streamErr) {
-            try {
-              const response = await callLlm(messagesForModel, { stream: false, endpoint });
-              const data = await response.json();
-              full = extractAssistantText(data);
-              if (String(full || "").trim()) {
-                bubble.innerHTML = formatReply(full);
-                answered = true;
-                break;
-              }
-            } catch (_jsonErr) {
-              // try next endpoint
-            }
+            const response = await callWorkerLlm(messagesForModel, { stream: false });
+            const data = await response.json();
+            full = extractAssistantText(data);
+            bubble.innerHTML = formatReply(full);
+          } catch (_err) {
+            full = "";
           }
         }
 
-        if (!answered) {
-          full = buildLocalConversationalReply(question);
+        if (!String(full || "").trim()) {
+          full = buildExpertReply(question);
           bubble.innerHTML = formatReply(full);
         }
 
@@ -814,7 +861,7 @@
         if (conversation.length > 24) conversation.splice(0, conversation.length - 24);
       } catch (err) {
         typing.remove();
-        const fallback = buildLocalConversationalReply(question);
+        const fallback = buildExpertReply(question);
         addBubble(formatReply(fallback), "bot", true);
         conversation.push({ role: "assistant", content: fallback });
         console.error(err);
@@ -828,7 +875,7 @@
       if (open) {
         if (!messages.dataset.ready) {
           addBubble(
-            "Hi — I’m the ZCG assistant. Ask me anything about our website, healthcare consulting, insurance operations, medical billing, performance marketing, or remote staffing. No sign-up needed.",
+            "Hi — I’m with Zaidi Consulting Group. Ask about prior authorization, denials, medical billing, performance marketing, or remote staffing — I’ll answer as your operator and subject-matter expert.",
             "bot"
           );
           messages.dataset.ready = "1";
