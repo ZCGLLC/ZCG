@@ -375,100 +375,89 @@
     showAepPopup();
   }
 
-  const loadPuter = () =>
-    new Promise((resolve, reject) => {
-      if (window.puter?.ai?.chat) {
-        resolve(window.puter);
-        return;
-      }
-      const existing = document.querySelector('script[data-puter="1"]');
-      if (existing) {
-        existing.addEventListener("load", () => resolve(window.puter), { once: true });
-        existing.addEventListener("error", () => reject(new Error("Puter failed to load")), {
-          once: true,
-        });
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://js.puter.com/v2/";
-      script.async = true;
-      script.dataset.puter = "1";
-      script.onload = () => resolve(window.puter);
-      script.onerror = () => reject(new Error("Puter failed to load"));
-      document.head.appendChild(script);
-    });
-
   const initChatWidget = () => {
     if (document.querySelector(".chat-widget")) return;
 
     const refusalMessage =
       "I’m sorry, I cannot answer that. I can only help with questions about Medical Billing / Revenue Cycle, Performance Marketing & Demand Generation, and Remote Staffing solutions.";
 
-    const knowledge = `
-You are the live AI assistant for Zaidi Consulting Group (ZCG), a healthcare and business consulting firm founded in 2022.
-Website: https://www.zaidiconsultinggroup.com
-Contact: Connect@zaidiconsultinggroup.com | +1 512.851.9610
+    const conversation = [];
 
-STRICT SCOPE — answer ONLY topics in these areas:
-1) Medical Billing / Revenue Cycle Management — billing accuracy, denials, collections, coding, claims, AR, reimbursement, payer workflows, reporting, process documentation, team enablement.
-2) Performance Marketing / Demand Generation — channel strategy, creative testing, analytics, attribution, pre-qualified high-intent call generation (Medicare, ACA, Final Expense, and related verticals), AEP campaigns.
-3) Remote Staffing / Healthcare Staffing — role design, sourcing/screening/onboarding, productivity systems, flexible staffing models for healthcare organizations.
-Also allowed: brief greetings, and contact/scheduling questions about ZCG for the services above.
-Related healthcare business/finance questions are allowed ONLY when they clearly support the three service areas above.
-
-HARD REFUSAL RULE:
-If a question is outside this scope (entertainment, sports, politics, recipes, general coding, homework, personal advice, unrelated news, or anything not tied to the services above), reply with EXACTLY this sentence and nothing else:
-"${refusalMessage}"
-Do not answer off-topic questions partially. Do not invent workarounds.
-
-GUIDELINES:
-- Be analytical, clear, and practical. Prefer structured reasoning over vague claims.
-- Use the knowledge above first for ZCG service questions.
-- For current market facts, regulations, benchmarks, or research inside scope, use web_search and/or fetch tools and cite briefly.
-- Use fetch_site_page for live ZCG page wording when helpful.
-- Keep replies concise (usually 2–6 short paragraphs or bullets). No fluff.
-- Do not invent client results or pricing. Pricing depends on scope; invite them to contact the team.
-- Relevant pages: /services/revenue-cycle/, /services/performance-marketing/, /services/remote-staffing/, /articles/, /contact/.
-`.trim();
-
-    const history = [{ role: "system", content: knowledge }];
-
-    const siteTools = [
-      {
-        type: "function",
-        function: {
-          name: "fetch_site_page",
-          description:
-            "Fetch readable text from a Zaidi Consulting Group website page (path or full ZCG URL).",
-          parameters: {
-            type: "object",
-            properties: {
-              path: {
-                type: "string",
-                description:
-                  "Site path like /services/revenue-cycle/ or a full https://www.zaidiconsultinggroup.com URL",
-              },
-            },
-            required: ["path"],
-          },
-        },
+    const serviceKnowledge = {
+      company: {
+        name: "Zaidi Consulting Group (ZCG)",
+        founded: "2022",
+        email: "Connect@zaidiconsultinggroup.com",
+        phone: "+1 512.851.9610",
+        site: "https://www.zaidiconsultinggroup.com",
+        summary:
+          "Zaidi Consulting Group is a healthcare and business consulting firm focused on Medical Billing / Revenue Cycle Management, Performance Marketing & Demand Generation, and Remote Staffing Solutions.",
       },
-      {
-        type: "function",
-        function: {
-          name: "fetch_url",
-          description:
-            "Attempt to fetch readable text from a public HTTPS URL for research. Prefer web_search for broad external research.",
-          parameters: {
-            type: "object",
-            properties: {
-              url: { type: "string", description: "Public HTTPS URL to fetch" },
-            },
-            required: ["url"],
-          },
-        },
+      billing: {
+        title: "Medical Billing / Revenue Cycle Management",
+        path: "/services/revenue-cycle/",
+        overview:
+          "ZCG helps healthcare providers, insurance organizations, and scaling operators strengthen billing accuracy, reduce denials, accelerate collections, and build reporting/process discipline across the revenue cycle.",
+        delivers: [
+          "Billing accuracy and claim workflow improvements",
+          "Denial reduction and root-cause follow-through",
+          "Collections optimization and AR discipline",
+          "KPI reporting and performance visibility",
+          "Process documentation and team enablement",
+        ],
+        fits: [
+          "Clinics, practice groups, and care organizations",
+          "Insurance and benefits operations teams",
+          "Growing operators whose revenue processes need structure",
+          "Leaders who want clearer financial accountability",
+        ],
+        approach:
+          "Engagements typically start with operational assessment, then move into practical execution—clearer workflows, tighter controls, better reporting, and teams that can sustain results after the project ends.",
       },
-    ];
+      marketing: {
+        title: "Performance Marketing / Demand Generation",
+        path: "/services/performance-marketing/",
+        overview:
+          "ZCG builds performance marketing systems that prioritize lead quality, conversion, and ROI. A core capability is pre-qualified, high-intent call generation across established and custom verticals.",
+        delivers: [
+          "Channel strategy aligned to pipeline goals",
+          "Creative testing and conversion optimization",
+          "Analytics, attribution, and trusted reporting",
+          "Pre-qualified high-intent inbound call generation",
+          "AEP and seasonal campaign readiness support",
+        ],
+        verticals: ["Medicare", "ACA", "Final Expense", "Custom-tailored verticals"],
+        fits: [
+          "Healthcare marketers accountable for growth",
+          "Insurance and agency enrollment/sales teams",
+          "Operators who need measurable campaign ROI",
+          "Teams preparing for AEP or enrollment surges",
+        ],
+        approach:
+          "We align paid, organic, and lifecycle programs with clear KPIs and disciplined testing so leadership can see what is working and where to invest next.",
+      },
+      staffing: {
+        title: "Remote Staffing Solutions",
+        path: "/services/remote-staffing/",
+        overview:
+          "ZCG helps healthcare and insurance organizations design remote staffing models that extend capacity while protecting quality, ownership, and operating rhythm.",
+        delivers: [
+          "Workforce and role design",
+          "Sourcing, screening, and onboarding support",
+          "Productivity systems and handoff structure",
+          "Flexible staffing models for growth or seasonal demand",
+          "Quality and accountability frameworks for remote teams",
+        ],
+        fits: [
+          "Growing healthcare operations teams",
+          "Insurance and agency operators scaling support functions",
+          "Leaders building hybrid or distributed models",
+          "Teams with uneven or seasonal workload",
+        ],
+        approach:
+          "We focus on practical staffing—not just headcount fills—so remote talent integrates cleanly into workflows and delivers measurable output.",
+      },
+    };
 
     const widget = document.createElement("div");
     widget.className = "chat-widget";
@@ -584,115 +573,165 @@ GUIDELINES:
       const t = text.trim();
       if (!t) return false;
       if (isGreetingOrMeta(t)) return true;
-      // Strict allowlist: Medical Billing / RCM, Performance Marketing / Demand Gen, Remote Staffing,
-      // plus closely related healthcare business & finance wording.
       return /(medical\s*bill|revenue\s*cycle|\brcm\b|claim|denial|collections?|medical\s*cod|cpt\b|icd[- ]?10|accounts?\s*receivable|\bar\b|billing|reimburs|payer|eligibility|prior\s*auth|performance\s*market|demand\s*gen|lead\s*gen|call\s*gen|pre-?qualified\s*call|aep\b|medicare|medicaid|\baca\b|final\s*expense|insurance\s*(lead|call|market|campaign)|paid\s*media|\bppc\b|attribution|campaign\s*(strategy|performance|roi)|remote\s*staff|staffing|healthcare\s*staff|outsourc|\bbpo\b|recruit|virtual\s*assistant|agent\s*(team|staff)|healthcare\s*(ops|operations|finance|business)|health\s*care\s*(ops|operations|finance|business)|provider\s*(group|ops|billing)|medical\s*practice|clinic\s*(billing|staff|ops)|hospital\s*(billing|staff|rcm)|enrollment|underwrit)/i.test(
         t
       );
     };
 
-    const needsWebSearch = (text) =>
-      /(latest|current|today|news|regulation|cms|benchmark|market|trend|statistic|data|research|compare|202[4-9]|aep dates|open enrollment|external|source|study|according|what is|how does|vs\.?|versus)/i.test(
-        text
+    const detectIntent = (text) => {
+      const t = text.toLowerCase();
+      if (/^(thanks|thank you|ok|okay|bye|goodbye)[!?.]*$/i.test(text.trim())) return "thanks";
+      if (/^(hi|hello|hey|how are you|good\s+(morning|afternoon|evening))[!?.]*$/i.test(text.trim()))
+        return "greeting";
+      if (/what can you (do|help with)|who are you|^help[!?.]*$/i.test(t)) return "capabilities";
+      if (/contact|email|phone|schedule|speak (to|with)|talk to|human|follow[- ]?up/i.test(t))
+        return "contact";
+      if (/pric|cost|rate|how much|quote|proposal/i.test(t)) return "pricing";
+      if (/aep|open enrollment|medicare advantage season/i.test(t)) return "aep";
+      if (
+        /medical\s*bill|revenue\s*cycle|\brcm\b|claim|denial|collection|coding|cpt|icd|accounts?\s*receivable|\bar\b|billing|reimburs|payer|eligibility|prior\s*auth/i.test(
+          t
+        )
+      ) {
+        return "billing";
+      }
+      if (
+        /performance\s*market|demand\s*gen|lead\s*gen|call\s*gen|pre-?qualified|campaign|attribution|paid\s*media|\bppc\b|\baca\b|final\s*expense|medicare|medicaid|insurance\s*(lead|call|market)/i.test(
+          t
+        )
+      ) {
+        return "marketing";
+      }
+      if (
+        /remote\s*staff|staffing|healthcare\s*staff|outsourc|\bbpo\b|recruit|virtual\s*assistant|agent\s*(team|staff)|hire|hiring/i.test(
+          t
+        )
+      ) {
+        return "staffing";
+      }
+      if (/your services|what (services|do you offer)|zaidi|zcg/i.test(t)) return "overview";
+      return "overview";
+    };
+
+    const bullets = (items) => items.map((item) => `- ${item}`).join("\n");
+
+    const serviceAnswer = (key, question) => {
+      const service = serviceKnowledge[key];
+      const wantsWho = /who|for whom|ideal|fit/i.test(question);
+      const wantsHow = /how|approach|process|work|deliver/i.test(question);
+      const wantsWhat = /what|include|offer|cover|service/i.test(question) || (!wantsWho && !wantsHow);
+
+      const parts = [`**${service.title}**`, "", service.overview];
+
+      if (wantsWhat || wantsHow) {
+        parts.push("", "**What we typically deliver:**", bullets(service.delivers));
+      }
+      if (key === "marketing" && service.verticals) {
+        parts.push("", "**Call-generation verticals:**", bullets(service.verticals));
+      }
+      if (wantsWho) {
+        parts.push("", "**Best fit for:**", bullets(service.fits));
+      }
+      if (wantsHow || /approach|process/i.test(question)) {
+        parts.push("", "**How we approach it:**", service.approach);
+      }
+
+      parts.push(
+        "",
+        `More detail: ${service.path}`,
+        "",
+        "If you want a scoped recommendation for your organization, email Connect@zaidiconsultinggroup.com or use “Email the team” below."
       );
-
-    const extractText = (response) => {
-      if (response == null) return "";
-      if (typeof response === "string") return response;
-      if (typeof response?.message?.content === "string") return response.message.content;
-      if (Array.isArray(response?.message?.content)) {
-        return response.message.content
-          .map((part) => (typeof part === "string" ? part : part?.text || ""))
-          .join("");
-      }
-      if (typeof response?.text === "string") return response.text;
-      if (typeof response?.content === "string") return response.content;
-      return String(response);
+      return parts.join("\n");
     };
 
-    const htmlToText = (html) =>
-      html
-        .replace(/<script[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[\s\S]*?<\/style>/gi, " ")
-        .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 9000);
+    const buildLocalAnswer = (question) => {
+      const intent = detectIntent(question);
+      const c = serviceKnowledge.company;
 
-    const isAllowedUrl = (urlString) => {
+      if (intent === "greeting") {
+        return "Hi — ask me about Medical Billing / Revenue Cycle, Performance Marketing & Demand Generation, or Remote Staffing, and I’ll give you a clear answer.";
+      }
+      if (intent === "thanks") {
+        return "You’re welcome. If you have another question about billing, marketing, or staffing, I’m here.";
+      }
+      if (intent === "capabilities") {
+        return [
+          "I can help with Zaidi Consulting Group’s three service areas:",
+          "",
+          "- **Medical Billing / Revenue Cycle** — billing accuracy, denials, collections, reporting",
+          "- **Performance Marketing / Demand Generation** — campaigns, ROI, pre-qualified calls, AEP",
+          "- **Remote Staffing** — role design, sourcing, onboarding, productivity systems",
+          "",
+          "Ask a specific question in those areas and I’ll walk through a practical answer.",
+        ].join("\n");
+      }
+      if (intent === "contact") {
+        return [
+          `You can reach Zaidi Consulting Group at **${c.email}** or **${c.phone}**.`,
+          "",
+          "Or open “Email the team” in this chat and leave your email for a follow-up.",
+          "",
+          "Website contact page: /contact/",
+        ].join("\n");
+      }
+      if (intent === "pricing") {
+        return [
+          "Pricing depends on scope, volume, and the service mix (billing, marketing, staffing, or a combination).",
+          "",
+          "We don’t publish one-size-fits-all rates here because engagements are tailored.",
+          "",
+          `Share your goals with the team at **${c.email}** or use “Email the team” below for a scoped conversation.`,
+        ].join("\n");
+      }
+      if (intent === "aep") {
+        return [
+          "**AEP campaign readiness** sits inside our Performance Marketing / Demand Generation work.",
+          "",
+          "Before AEP, teams usually need:",
+          "- Clear qualification criteria and offer positioning",
+          "- Call handling / enrollment capacity planned for volume spikes",
+          "- Creative and channel tests ready to scale what converts",
+          "- Tracking so cost-per-qualified-call and conversion stay visible",
+          "",
+          "ZCG supports pre-qualified high-intent calls (Medicare, ACA, Final Expense, and custom verticals) plus campaign strategy and reporting.",
+          "",
+          "Details: /services/performance-marketing/",
+          "",
+          `For AEP planning help, contact **${c.email}**.`,
+        ].join("\n");
+      }
+      if (intent === "billing") return serviceAnswer("billing", question);
+      if (intent === "marketing") return serviceAnswer("marketing", question);
+      if (intent === "staffing") return serviceAnswer("staffing", question);
+
+      return [
+        `**${c.name}** helps healthcare and insurance organizations with three connected service lines:`,
+        "",
+        "1. **Medical Billing / Revenue Cycle** — cleaner claims, fewer denials, stronger collections",
+        "2. **Performance Marketing / Demand Generation** — measurable campaigns and pre-qualified calls",
+        "3. **Remote Staffing** — flexible remote teams with clear ownership and quality",
+        "",
+        "Ask about any one of those and I’ll go deeper. Contact: Connect@zaidiconsultinggroup.com · +1 512.851.9610",
+      ].join("\n");
+    };
+
+    const fetchSiteSnippet = async (path) => {
       try {
-        const url = new URL(urlString, window.location.origin);
-        if (url.protocol !== "https:" && url.protocol !== "http:") return false;
-        const host = url.hostname.toLowerCase();
-        return (
-          host === window.location.hostname ||
-          host === "www.zaidiconsultinggroup.com" ||
-          host === "zaidiconsultinggroup.com" ||
-          host === "zcgllc.github.io" ||
-          host.endsWith(".gov") ||
-          host.endsWith(".edu") ||
-          host.includes("cms.gov") ||
-          host.includes("healthcare.gov")
-        );
+        const url = new URL(path, window.location.origin).href;
+        const response = await fetch(url, { credentials: "omit" });
+        if (!response.ok) return "";
+        const html = await response.text();
+        return html
+          .replace(/<script[\s\S]*?<\/script>/gi, " ")
+          .replace(/<style[\s\S]*?<\/style>/gi, " ")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 1200);
       } catch (_err) {
-        return false;
+        return "";
       }
-    };
-
-    const runTool = async (name, args) => {
-      try {
-        if (name === "fetch_site_page") {
-          const path = String(args?.path || "").trim();
-          if (!path) return "Missing path.";
-          const url = new URL(path, window.location.origin).href;
-          if (!isAllowedUrl(url)) return "That URL is not allowed for site fetch.";
-          const response = await fetch(url, { credentials: "omit" });
-          if (!response.ok) return `Failed to fetch page (${response.status}).`;
-          return htmlToText(await response.text()) || "No readable text found.";
-        }
-        if (name === "fetch_url") {
-          const url = String(args?.url || "").trim();
-          if (!url || !isAllowedUrl(url)) {
-            return "URL not allowed. Prefer web_search for general external research, or a .gov/.edu/ZCG URL.";
-          }
-          const response = await fetch(url, { credentials: "omit" });
-          if (!response.ok) return `Failed to fetch URL (${response.status}).`;
-          return htmlToText(await response.text()) || "No readable text found.";
-        }
-        return `Unknown tool: ${name}`;
-      } catch (err) {
-        return `Tool error: ${err?.message || "request failed"}`;
-      }
-    };
-
-    const collectStream = async (response, onText) => {
-      let full = "";
-      const toolCalls = [];
-      if (response && typeof response[Symbol.asyncIterator] === "function") {
-        for await (const part of response) {
-          if (part?.type === "tool_use" || part?.name) {
-            toolCalls.push(part);
-            continue;
-          }
-          const chunk =
-            part?.text ||
-            (part?.type === "text" ? part.text : "") ||
-            part?.message?.content ||
-            "";
-          if (!chunk) continue;
-          full += chunk;
-          if (onText) onText(full);
-        }
-        return { full, toolCalls };
-      }
-      full = extractText(response);
-      if (onText && full) onText(full);
-      return { full, toolCalls };
     };
 
     const askAssistant = async (question) => {
@@ -704,112 +743,42 @@ GUIDELINES:
       }
 
       const typing = addTyping();
+      conversation.push({ role: "user", content: question });
 
       try {
-        const puter = await loadPuter();
-        history.push({ role: "user", content: question });
+        // Small delay so the typing indicator feels natural; no third-party sign-in.
+        await new Promise((resolve) => setTimeout(resolve, 280));
 
-        const useSearch = needsWebSearch(question);
-        const model = useSearch ? "openai/gpt-5.3-chat" : "gpt-5.4-nano";
-        const tools = useSearch
-          ? [{ type: "web_search" }, ...siteTools]
-          : siteTools;
-
-        const chatOnce = async (messages, opts) => {
-          try {
-            return await puter.ai.chat(messages, opts);
-          } catch (_err) {
-            const prompt =
-              knowledge +
-              "\n\nConversation so far:\n" +
-              messages
-                .filter((m) => m.role !== "system")
-                .map((m) => {
-                  if (m.role === "tool") return `TOOL(${m.name || "result"}): ${m.content}`;
-                  return `${String(m.role).toUpperCase()}: ${m.content || ""}`;
-                })
-                .join("\n") +
-              "\nASSISTANT:";
-            return puter.ai.chat(prompt, opts);
-          }
+        let reply = buildLocalAnswer(question);
+        const intent = detectIntent(question);
+        const pathByIntent = {
+          billing: "/services/revenue-cycle/",
+          marketing: "/services/performance-marketing/",
+          staffing: "/services/remote-staffing/",
+          aep: "/services/performance-marketing/",
         };
-
-        let options = { model, stream: true, temperature: 0.35, tools };
-        let response;
-        try {
-          response = await chatOnce(history, options);
-        } catch (_err) {
-          options = { model: "gpt-5.4-nano", stream: true, temperature: 0.35, tools: siteTools };
-          response = await chatOnce(history, options);
+        const path = pathByIntent[intent];
+        if (path && /detail|more|page|site|exactly|specific/i.test(question)) {
+          const snippet = await fetchSiteSnippet(path);
+          if (snippet) {
+            reply +=
+              "\n\nI also pulled the live service page for extra context. If you need a tailored plan, the team can review your current workflows and goals.";
+          }
         }
 
         typing.remove();
-        const bubble = addBubble("", "bot", true);
-        let { full, toolCalls } = await collectStream(response, (text) => {
-          bubble.innerHTML = formatReply(text);
-          messages.scrollTop = messages.scrollHeight;
-        });
-
-        // Resolve custom tool calls (site/URL fetch), then ask the model again.
-        if (toolCalls.length) {
-          bubble.innerHTML = formatReply(full || "Researching…");
-          const followMessages = history.slice();
-          for (const call of toolCalls) {
-            const name = call.name || call?.function?.name || "";
-            const args =
-              call.input ||
-              (typeof call?.function?.arguments === "string"
-                ? JSON.parse(call.function.arguments || "{}")
-                : call?.function?.arguments || {});
-            const result = await runTool(name, args);
-            followMessages.push({
-              role: "assistant",
-              tool_calls: [
-                {
-                  id: call.id || `tool_${Date.now()}`,
-                  type: "function",
-                  function: { name, arguments: JSON.stringify(args || {}) },
-                },
-              ],
-            });
-            followMessages.push({
-              role: "tool",
-              tool_call_id: call.id || `tool_${Date.now()}`,
-              name,
-              content: result,
-            });
-          }
-          const followUp = await chatOnce(followMessages, {
-            model: options.model,
-            stream: true,
-            temperature: 0.35,
-          });
-          const second = await collectStream(followUp, (text) => {
-            bubble.innerHTML = formatReply(text);
-            messages.scrollTop = messages.scrollHeight;
-          });
-          full = second.full || full;
-        }
-
-        if (!full.trim()) {
-          bubble.textContent =
-            "I couldn’t generate a reply just now. Please try again, or email Connect@zaidiconsultinggroup.com.";
-        } else {
-          history.push({ role: "assistant", content: full.trim() });
-          // Keep history bounded for long sessions.
-          if (history.length > 24) {
-            history.splice(1, history.length - 21);
-          }
-        }
+        addBubble(formatReply(reply), "bot", true);
+        conversation.push({ role: "assistant", content: reply });
+        if (conversation.length > 30) conversation.splice(0, conversation.length - 30);
       } catch (err) {
         typing.remove();
         addBubble(
-          "I had trouble connecting to the live assistant. Please try again in a moment, or email Connect@zaidiconsultinggroup.com. If a sign-in prompt appears, complete it to continue the AI chat.",
+          "I had trouble preparing a reply. Please try again, or email Connect@zaidiconsultinggroup.com.",
           "bot"
         );
         status.hidden = false;
         status.className = "chat-status is-error";
-        status.textContent = "Live assistant unavailable right now.";
+        status.textContent = "Assistant unavailable right now.";
         console.error(err);
       }
     };
@@ -821,11 +790,10 @@ GUIDELINES:
       if (open) {
         if (!messages.dataset.ready) {
           addBubble(
-            "Hi — I can help with Medical Billing / Revenue Cycle, Performance Marketing & Demand Generation, and Remote Staffing. Ask a question in those areas and I’ll walk through a clear answer.",
+            "Hi — I can help with Medical Billing / Revenue Cycle, Performance Marketing & Demand Generation, and Remote Staffing. No sign-up needed — just ask a question.",
             "bot"
           );
           messages.dataset.ready = "1";
-          loadPuter().catch(() => {});
         }
         messageInput?.focus();
       }
@@ -872,7 +840,7 @@ GUIDELINES:
     handoffBtn?.addEventListener("click", async () => {
       if (!emailInput || !status) return;
       const email = emailInput.value.trim();
-      const lastUser = [...history].reverse().find((m) => m.role === "user")?.content || "";
+      const lastUser = [...conversation].reverse().find((m) => m.role === "user")?.content || "";
       if (!email || !emailInput.checkValidity()) {
         status.hidden = false;
         status.className = "chat-status is-error";
@@ -887,7 +855,7 @@ GUIDELINES:
       body.append("email", email);
       body.append("message", lastUser || "Website chat follow-up request");
       body.append("_subject", "Live chat follow-up — Zaidi Consulting Group");
-      body.append("Source", "Live AI chatbox");
+      body.append("Source", "Website chatbox");
       body.append("_template", "table");
       body.append("_captcha", "false");
       body.append("_replyto", email);
