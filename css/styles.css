@@ -2073,7 +2073,31 @@ body.aep-popup-open {
 .chat-md-h {
   font-weight: 700;
   color: var(--ink);
-  margin: 0.3rem 0 0.1rem;
+  margin: 0.45rem 0 0.2rem;
+  font-size: 0.92rem;
+}
+
+.chat-li {
+  display: grid;
+  grid-template-columns: 0.85rem 1fr;
+  gap: 0.35rem;
+  margin: 0.18rem 0;
+  align-items: start;
+}
+
+.chat-li-mark {
+  color: var(--teal);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.chat-gap {
+  height: 0.55rem;
+}
+
+.chat-bubble.is-bot strong {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .chat-bubble.is-typing {
