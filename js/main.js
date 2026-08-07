@@ -401,25 +401,34 @@
   const initChatWidget = () => {
     if (document.querySelector(".chat-widget")) return;
 
+    const refusalMessage =
+      "I’m sorry, I cannot answer that. I can only help with questions about Medical Billing / Revenue Cycle, Performance Marketing & Demand Generation, and Remote Staffing solutions.";
+
     const knowledge = `
 You are the live AI assistant for Zaidi Consulting Group (ZCG), a healthcare and business consulting firm founded in 2022.
 Website: https://www.zaidiconsultinggroup.com
 Contact: Connect@zaidiconsultinggroup.com | +1 512.851.9610
 
-SERVICES:
-1) Revenue Cycle Management — billing accuracy, denial reduction, collections optimization, reporting, process documentation, team enablement.
-2) Performance Marketing — channel strategy, creative testing, analytics, attribution, and pre-qualified high-intent call generation across different verticals (core: Medicare, ACA, Final Expense; plus custom verticals). AEP campaign support available.
-3) Remote Staffing Solutions / Healthcare Staffing — role design, sourcing/screening/onboarding, productivity systems, flexible staffing models for healthcare organizations.
+STRICT SCOPE — answer ONLY topics in these areas:
+1) Medical Billing / Revenue Cycle Management — billing accuracy, denials, collections, coding, claims, AR, reimbursement, payer workflows, reporting, process documentation, team enablement.
+2) Performance Marketing / Demand Generation — channel strategy, creative testing, analytics, attribution, pre-qualified high-intent call generation (Medicare, ACA, Final Expense, and related verticals), AEP campaigns.
+3) Remote Staffing / Healthcare Staffing — role design, sourcing/screening/onboarding, productivity systems, flexible staffing models for healthcare organizations.
+Also allowed: brief greetings, and contact/scheduling questions about ZCG for the services above.
+Related healthcare business/finance questions are allowed ONLY when they clearly support the three service areas above.
+
+HARD REFUSAL RULE:
+If a question is outside this scope (entertainment, sports, politics, recipes, general coding, homework, personal advice, unrelated news, or anything not tied to the services above), reply with EXACTLY this sentence and nothing else:
+"${refusalMessage}"
+Do not answer off-topic questions partially. Do not invent workarounds.
 
 GUIDELINES:
 - Be analytical, clear, and practical. Prefer structured reasoning over vague claims.
-- Answer questions about ZCG services in depth. Use the knowledge above first.
-- When the user asks for current market facts, regulations, benchmarks, news, or anything outside the website knowledge, use web_search and/or fetch_url tools and cite sources briefly.
-- Use fetch_site_page to pull live wording from ZCG pages when helpful.
-- If unsure, say what you know, what is uncertain, and suggest contacting the ZCG team.
+- Use the knowledge above first for ZCG service questions.
+- For current market facts, regulations, benchmarks, or research inside scope, use web_search and/or fetch tools and cite briefly.
+- Use fetch_site_page for live ZCG page wording when helpful.
 - Keep replies concise (usually 2–6 short paragraphs or bullets). No fluff.
 - Do not invent client results or pricing. Pricing depends on scope; invite them to contact the team.
-- You may recommend relevant site pages: /services/revenue-cycle/, /services/performance-marketing/, /services/remote-staffing/, /articles/, /contact/.
+- Relevant pages: /services/revenue-cycle/, /services/performance-marketing/, /services/remote-staffing/, /articles/, /contact/.
 `.trim();
 
     const history = [{ role: "system", content: knowledge }];
@@ -466,31 +475,33 @@ GUIDELINES:
     widget.innerHTML = `
       <div class="chat-panel" id="chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title">
         <div class="chat-header">
-          <div>
-            <h2 id="chat-title">ZCG Live Assistant</h2>
-            <p>Ask anything about our services — I can research and reason through answers.</p>
+          <div class="chat-header-copy">
+            <div class="chat-header-top">
+              <h2 id="chat-title">ZCG Assistant</h2>
+              <span class="chat-live-pill" aria-hidden="true">Live</span>
+            </div>
+            <p>Medical Billing · Performance Marketing · Remote Staffing</p>
           </div>
           <button class="chat-close" type="button" aria-label="Close chat">&times;</button>
         </div>
         <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
-        <div class="chat-quick" id="chat-quick">
-          <button type="button" data-quick="What does your Revenue Cycle Management service include?">Revenue Cycle</button>
-          <button type="button" data-quick="How does Performance Marketing and call generation work at ZCG?">Performance Marketing</button>
+        <div class="chat-quick" id="chat-quick" aria-label="Suggested questions">
+          <button type="button" data-quick="What does your Medical Billing / Revenue Cycle Management service include?">Medical Billing</button>
+          <button type="button" data-quick="How does Performance Marketing and demand generation work at ZCG?">Performance Marketing</button>
           <button type="button" data-quick="How can Remote Staffing help a healthcare organization scale?">Remote Staffing</button>
-          <button type="button" data-quick="What should we prepare before AEP for insurance call campaigns?">AEP prep</button>
         </div>
         <form class="chat-composer" id="chat-form">
           <div class="chat-composer-row chat-composer-main">
             <label class="chat-sr-only" for="chat-message">Your question</label>
-            <textarea id="chat-message" name="message" rows="2" placeholder="Ask about our services..." required></textarea>
+            <textarea id="chat-message" name="message" rows="2" placeholder="Ask about billing, marketing, or staffing..." required></textarea>
             <button class="btn btn-primary" type="submit" id="chat-submit">Send</button>
           </div>
           <details class="chat-handoff">
-            <summary>Want a human follow-up?</summary>
+            <summary>Email the team</summary>
             <div class="chat-handoff-fields">
-              <label for="chat-email">Email</label>
+              <label class="chat-sr-only" for="chat-email">Email</label>
               <input id="chat-email" name="email" type="email" placeholder="you@company.com" autocomplete="email" />
-              <button class="btn btn-outline" type="button" id="chat-handoff-btn">Email the team</button>
+              <button class="btn btn-outline" type="button" id="chat-handoff-btn">Send follow-up</button>
             </div>
           </details>
           <p class="chat-status" id="chat-status" hidden></p>
@@ -553,6 +564,31 @@ GUIDELINES:
       messages.appendChild(bubble);
       messages.scrollTop = messages.scrollHeight;
       return bubble;
+    };
+
+    const isGreetingOrMeta = (text) => {
+      const t = text.trim();
+      if (
+        /^(hi|hello|hey|how are you|good\s+(morning|afternoon|evening)|thanks|thank\s+you|ok|okay|bye|goodbye|help|what can you (do|help with)|who are you)[!?.]*$/i.test(
+          t
+        )
+      ) {
+        return true;
+      }
+      return /(contact|email|phone|schedule|speak (to|with)|talk to|human|follow[- ]?up|zaidi consulting|\bzaidi\b|\bzcg\b|your services|what (services|do you offer))/i.test(
+        t
+      );
+    };
+
+    const isOnTopic = (text) => {
+      const t = text.trim();
+      if (!t) return false;
+      if (isGreetingOrMeta(t)) return true;
+      // Strict allowlist: Medical Billing / RCM, Performance Marketing / Demand Gen, Remote Staffing,
+      // plus closely related healthcare business & finance wording.
+      return /(medical\s*bill|revenue\s*cycle|\brcm\b|claim|denial|collections?|medical\s*cod|cpt\b|icd[- ]?10|accounts?\s*receivable|\bar\b|billing|reimburs|payer|eligibility|prior\s*auth|performance\s*market|demand\s*gen|lead\s*gen|call\s*gen|pre-?qualified\s*call|aep\b|medicare|medicaid|\baca\b|final\s*expense|insurance\s*(lead|call|market|campaign)|paid\s*media|\bppc\b|attribution|campaign\s*(strategy|performance|roi)|remote\s*staff|staffing|healthcare\s*staff|outsourc|\bbpo\b|recruit|virtual\s*assistant|agent\s*(team|staff)|healthcare\s*(ops|operations|finance|business)|health\s*care\s*(ops|operations|finance|business)|provider\s*(group|ops|billing)|medical\s*practice|clinic\s*(billing|staff|ops)|hospital\s*(billing|staff|rcm)|enrollment|underwrit)/i.test(
+        t
+      );
     };
 
     const needsWebSearch = (text) =>
@@ -660,8 +696,14 @@ GUIDELINES:
     };
 
     const askAssistant = async (question) => {
-      const typing = addTyping();
       status.hidden = true;
+
+      if (!isOnTopic(question)) {
+        addBubble(refusalMessage, "bot");
+        return;
+      }
+
+      const typing = addTyping();
 
       try {
         const puter = await loadPuter();
@@ -779,7 +821,7 @@ GUIDELINES:
       if (open) {
         if (!messages.dataset.ready) {
           addBubble(
-            "Hi — I’m the ZCG live assistant. Ask me anything about Revenue Cycle, Performance Marketing, Remote Staffing, AEP campaigns, or related healthcare operations. I can reason through answers and pull in external research when needed.",
+            "Hi — I can help with Medical Billing / Revenue Cycle, Performance Marketing & Demand Generation, and Remote Staffing. Ask a question in those areas and I’ll walk through a clear answer.",
             "bot"
           );
           messages.dataset.ready = "1";
