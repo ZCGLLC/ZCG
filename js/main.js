@@ -13,17 +13,31 @@
   onScroll();
 
   if (toggle && navLinks) {
-    toggle.addEventListener("click", () => {
-      const open = navLinks.classList.toggle("is-open");
+    const setNavOpen = (open) => {
+      navLinks.classList.toggle("is-open", open);
       toggle.setAttribute("aria-expanded", String(open));
+      document.body.classList.toggle("nav-open", open);
+    };
+
+    toggle.addEventListener("click", () => {
+      setNavOpen(!navLinks.classList.contains("is-open"));
     });
 
     navLinks.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        navLinks.classList.remove("is-open");
-        toggle.setAttribute("aria-expanded", "false");
-      });
+      link.addEventListener("click", () => setNavOpen(false));
     });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setNavOpen(false);
+    });
+
+    window.addEventListener(
+      "resize",
+      () => {
+        if (window.matchMedia("(min-width: 901px)").matches) setNavOpen(false);
+      },
+      { passive: true }
+    );
   }
 
   const revealEls = document.querySelectorAll(".reveal, .service-row");
@@ -872,6 +886,7 @@
       panel.classList.toggle("is-open", open);
       launcher.setAttribute("aria-expanded", String(open));
       panel.setAttribute("aria-modal", String(open));
+      document.body.classList.toggle("chat-open", open);
       if (open) {
         if (!messages.dataset.ready) {
           addBubble(
@@ -880,7 +895,7 @@
           );
           messages.dataset.ready = "1";
         }
-        messageInput?.focus();
+        messageInput?.focus({ preventScroll: true });
       }
     };
 
