@@ -51,17 +51,6 @@ a {
   text-decoration: none;
 }
 
-a:focus-visible,
-button:focus-visible,
-.btn:focus-visible,
-.social-link:focus-visible,
-.nav-link:focus-visible,
-.carousel-btn:focus-visible,
-.carousel-dot:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
-}
-
 ul {
   list-style: none;
 }
