@@ -187,7 +187,7 @@
   const aepStorageKey = "zcg-aep-popup-dismissed";
   const aepEndpoint = "https://formsubmit.co/ajax/Connect@zaidiconsultinggroup.com";
   const aepAutoresponse =
-    "Thank you for connecting with Zaidi Consulting Group. AEP is approaching — reply to this email or contact us at Connect@zaidiconsultinggroup.com to claim 10% off your first insurance campaign. We will follow up shortly.";
+    "Thank you for connecting with Zaidi Consulting Group. AEP is here — reply to this email or contact us at Connect@zaidiconsultinggroup.com to claim 10% off your first insurance campaign. We will follow up shortly.";
 
   const showAepPopup = () => {
     if (sessionStorage.getItem(aepStorageKey) === "1") return;
@@ -202,7 +202,7 @@
       <div class="aep-popup-dialog">
         <button class="aep-popup-close" type="button" aria-label="Close">&times;</button>
         <p class="aep-popup-kicker">Annual Enrollment Period</p>
-        <h2 id="aep-popup-title">AEP is Approaching</h2>
+        <h2 id="aep-popup-title">AEP is Here</h2>
         <p class="aep-popup-copy">
           Enter email below to receive <strong>10% off</strong> first campaign.
         </p>
